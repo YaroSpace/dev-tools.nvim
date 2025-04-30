@@ -18,10 +18,13 @@ M.register_action = function(action)
   Actions.register(action)
 end
 
----@param action Config
+---@param opts Config
 M.setup = function(opts)
   Config.setup(opts)
+
   init()
+
+  return Config
 end
 
 return M

@@ -2,33 +2,36 @@
 ---@field actions Action[] - list of custom actions
 ---@field filetypes {include: string[], exclude: string[]} - filetypes to include/exclude
 
-local M = {}
-
 ---@type Config
-local defaults = {
+local M = {
   actions = {},
-  filetypes = {
+
+  filetypes = { -- filetypes for which to attach the LSP
     include = {},
     exclude = {},
   },
+
+  builtin_actions = {
+    exclude = {}, -- language/category/title of actions to exclude or true to exclude all
+  },
+
+  debug = true, -- extra debug info
 }
 
-local function merge(dst, src)
-  for k, v in pairs(src) do
-    if type(v) == "table" and type(dst[k]) == "table" then
-      merge(dst[k], v)
+local function merge_opts(opts)
+  for k, v in pairs(opts) do
+    if type(v) == "table" and type(M[k]) == "table" then
+      M[k] = vim.tbl_deep_extend("force", M[k], v)
     else
-      dst[k] = v
+      M[k] = v
     end
   end
-
-  return dst
 end
 
-M = setmetatable(defaults, {
+M = setmetatable(M, {
   __index = {
     setup = function(opts)
-      merge(M, opts)
+      merge_opts(opts)
     end,
   },
 })

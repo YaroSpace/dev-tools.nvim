@@ -1,5 +1,6 @@
 local Actions = require("dev-tools.actions")
 local Config = require("dev-tools.config")
+local Edit = require("dev-tools.edit")
 local Logger = require("dev-tools.logger")
 
 local M = {}
@@ -13,7 +14,13 @@ local M = {}
 ---@field root string - root directory of the file
 ---@field ext string - file extension
 ---@field filetype string - filetype
----@field range {start: {line: number, character: number}, end: {line: number, character: number}, rc: number[]}|nil - range of the current selection, rc - row/col format
+---@field range Range|nil - range of the current selection
+---@field edit Edit - edititng functions
+
+---@class Range
+---@field start {line: number, character: number} - start position of the range
+---@field end {line: number, character: number} - end position of the range
+---@field rc table<number, number, number, number> - row/col format
 
 ---@return ActionCtx
 local function get_ctx(params)
@@ -33,7 +40,7 @@ local function get_ctx(params)
     }
   end
 
-  return {
+  local ctx = {
     buf = buf,
     win = vim.fn.win_findbuf(buf)[1],
     row = params.range and params.range.start.line or cursor[1],
@@ -44,6 +51,10 @@ local function get_ctx(params)
     filetype = vim.api.nvim_get_option_value("filetype", { buf = buf }),
     range = params.range,
   }
+
+  ctx.edit = setmetatable(ctx, { __index = Edit })
+
+  return ctx
 end
 
 ---@param ctx Ctx|nil
@@ -129,7 +140,7 @@ function M.start_lsp(buf)
   }
 
   local client_id = vim.lsp.get_clients { name = "dev-tools" }
-  if client_id then vim.lsp.stop_client(client_id) end
+  -- if client_id then vim.lsp.stop_client(client_id) end
 
   client_id = vim.lsp.start({
     name = "dev-tools",
@@ -144,7 +155,6 @@ function M.start_lsp(buf)
     end),
   }, dispatchers)
 
-  LOG("client_id: ", buf, client_id)
   return client_id
 end
 

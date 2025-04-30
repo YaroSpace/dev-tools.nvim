@@ -1,3 +1,5 @@
+local Config = require("dev-tools.config")
+
 local M = {}
 
 local default_options = {
@@ -21,6 +23,11 @@ M.warn = function(message)
 end
 
 M.error = function(message, lines_no)
+  local lines = vim.split(message, "\n")
+
+  lines_no = Config.debug and #lines or lines_no or 1
+  message = table.concat(lines, "\n", 1, lines_no)
+
   M.log(message, log_levels.ERROR)
 end
 

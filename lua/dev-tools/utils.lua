@@ -1,5 +1,6 @@
 local M = {}
 
+---@param path string
 M.get_plugin_path = function(path)
   path = ("/" .. path) or ""
   local source = debug.getinfo(1).source
