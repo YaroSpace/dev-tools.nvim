@@ -1,36 +1,68 @@
+local Actions = require("dev-tools.actions")
 local Config = require("dev-tools.config")
 local Logger = require("dev-tools.logger")
 
 local M = {}
 
-local function extract_variable()
-  --
-end
+---@class Ctx
+---@field buf number - buffer number
+---@field win number - window number
+---@field row number - current line number
+---@field col number - current column number
+---@field bufname string - full path to file in buffer
+---@field root string - root directory of the file
+---@field ext string - file extension
+---@field filetype string - filetype
+---@field range {start: {line: number, character: number}, end: {line: number, character: number}, rc: number[]}|nil - range of the current selection, rc - row/col format
 
+---@return ActionCtx
 local function get_ctx(params)
   if not (params and params.textDocument) then return {} end
 
   local buf = vim.uri_to_bufnr(params.textDocument.uri)
   local cursor = vim.api.nvim_win_get_cursor(vim.fn.bufwinid(buf))
   local file = vim.uri_to_fname(params.textDocument.uri)
+  local root = vim.fs.root(file, { ".git", ".gitignore" }) or ""
+
+  if params.range then
+    params.range.rc = {
+      params.range.start.line,
+      params.range.start.character,
+      params.range["end"].line,
+      params.range["end"].character,
+    }
+  end
 
   return {
     buf = buf,
-    lnum = params.range and params.range.start.line or cursor[1],
+    win = vim.fn.win_findbuf(buf)[1],
+    row = params.range and params.range.start.line or cursor[1],
     col = params.range and params.range.start.character or cursor[2],
-    file = file,
+    bufname = file,
+    root = root,
     ext = vim.fn.fnamemodify(file, ":e"),
-    ft = vim.api.nvim_get_option_value("filetype", { buf = buf }),
+    filetype = vim.api.nvim_get_option_value("filetype", { buf = buf }),
     range = params.range,
   }
 end
 
-local function code_actions(params)
-  local actions = {
-    { title = "Extract variable", category = "Refactoring", command = "copy_as_curl", fn = extract_variable },
-  }
+---@param ctx Ctx|nil
+local function code_actions(ctx)
+  local built_in = Actions.built_in()
+  local custom = Actions.custom()
 
-  if not params then return actions end
+  local actions = vim.list_extend(custom, built_in)
+  if not ctx then return actions end
+
+  return vim
+    .iter(actions)
+    :filter(function(action)
+      action.ctx = ctx
+      return (action.filetype and vim.tbl_contains(action.filetype, ctx.filetype))
+        or (type(action.filter) == "function" and action.filter(ctx))
+        or (type(action.filter) == "string") and ctx.bufname:match(action.filter)
+    end)
+    :totable()
 end
 
 local function initialize()
@@ -81,8 +113,8 @@ local function new_server()
 end
 
 M.start = function(buf, ft)
-  if Config.filetypes.exclude and vim.tbl_contains(Config.filetypes.exclude, ft) then return end
-  if Config.filetypes.include and not vim.tbl_contains(Config.filetypes.include, ft) then return end
+  if vim.tbl_contains(Config.filetypes.exclude or {}, ft) then return end
+  if not vim.tbl_contains(Config.filetypes.include or {}, ft) then return end
 
   M.start_lsp(buf)
 end
@@ -96,7 +128,7 @@ function M.start_lsp(buf)
     end,
   }
 
-  local client_id = vim.lsp.get_client_by_id(buf)
+  local client_id = vim.lsp.get_clients { name = "dev-tools" }
   if client_id then vim.lsp.stop_client(client_id) end
 
   client_id = vim.lsp.start({
@@ -112,6 +144,7 @@ function M.start_lsp(buf)
     end),
   }, dispatchers)
 
+  LOG("client_id: ", buf, client_id)
   return client_id
 end
 

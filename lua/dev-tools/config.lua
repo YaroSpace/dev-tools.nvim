@@ -1,6 +1,14 @@
+---@class Config
+---@field actions Action[] - list of custom actions
+---@field filetypes {include: string[], exclude: string[]} - filetypes to include/exclude
+
+local M = {}
+
+---@type Config
 local defaults = {
+  actions = {},
   filetypes = {
-    include = { "lua" },
+    include = {},
     exclude = {},
   },
 }
@@ -17,7 +25,7 @@ local function merge(dst, src)
   return dst
 end
 
-local M = setmetatable(defaults, {
+M = setmetatable(defaults, {
   __index = {
     setup = function(opts)
       merge(M, opts)
