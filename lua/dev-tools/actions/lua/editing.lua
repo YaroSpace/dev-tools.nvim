@@ -7,20 +7,18 @@ return {
   actions = {
     {
       title = "Split table",
-      filetype = { "lua" },
+      filter = function(ctx)
+        return ctx.edit:get_node("table_constructor")
+      end,
       fn = function(action)
         local ctx = action.ctx
-        local ts = vim.treesitter
-        local line = ctx.edit:get_lines()[1]
-
-        vim.api.nvim_win_set_cursor(ctx.win, { ctx.range.rc[1] + 1, (line:find("{") or 1) + 2 })
-
         local tbl, range = ctx.edit:get_node("table_constructor")
-        if not tbl then return end
 
-        local tbl_lines = vim.split(ts.get_node_text(tbl, ctx.buf):gsub("[{}]", ""), ",")
+        local tbl_lines = ctx.edit:get_node_text(tbl)
+        if tbl_lines:find("\n") then return end
+
         tbl_lines = vim
-          .iter(tbl_lines)
+          .iter(vim.split(tbl_lines:gsub("[{}]", ""), ","))
           :map(function(line)
             return line .. ","
           end)
@@ -28,9 +26,9 @@ return {
 
         local lines = {}
 
-        table.insert(lines, line:match("^.*{"))
+        table.insert(lines, ctx.line:match("^.*{"))
         vim.list_extend(lines, tbl_lines)
-        table.insert(lines, line:match("}.*$"))
+        table.insert(lines, ctx.line:match("}.*$"))
 
         ctx.edit:set_lines(lines, range[1], range[1] + 1)
 
@@ -40,20 +38,18 @@ return {
     },
     {
       title = "Join table",
-      filetype = { "lua" },
+      filter = function(ctx)
+        return ctx.edit:get_node("table_constructor")
+      end,
       fn = function(action)
         local ctx = action.ctx
-        local ts = vim.treesitter
-        local line = ctx.edit:get_lines()[1]
-
-        vim.api.nvim_win_set_cursor(ctx.win, { ctx.range.rc[1] + 1, (line:find("{") or 1) + 2 })
-
         local tbl, range = ctx.edit:get_node("table_constructor")
-        if not tbl then return end
 
-        local tbl_lines = vim.split(ts.get_node_text(tbl, ctx.buf):gsub("[{}\n]", ""), ",")
+        local tbl_lines = ctx.edit:get_node_text(tbl)
+        if not tbl_lines:find("\n") then return end
+
         tbl_lines = vim
-          .iter(tbl_lines)
+          .iter(vim.split(tbl_lines:gsub("[{}\n]", ""), ","))
           :map(function(line)
             line = line:match("^%s*(.-)%s*$") or ""
             return #line > 0 and line or nil

@@ -3,13 +3,18 @@ local Config = require("dev-tools.config")
 local Edit = require("dev-tools.edit")
 local Logger = require("dev-tools.logger")
 
-local M = {}
+local M = {
+  actions = {},
+}
 
 ---@class Ctx
 ---@field buf number - buffer number
 ---@field win number - window number
 ---@field row number - current line number
 ---@field col number - current column number
+---@field line string - current line
+---@field node fun(): TSNode|nil - current TS node
+---@field type string|nil - type of the current TS node
 ---@field bufname string - full path to file in buffer
 ---@field root string - root directory of the file
 ---@field ext string - file extension
@@ -28,6 +33,10 @@ local function get_ctx(params)
 
   local buf = vim.uri_to_bufnr(params.textDocument.uri)
   local cursor = vim.api.nvim_win_get_cursor(vim.fn.bufwinid(buf))
+  local row = params.range and params.range.start.line or cursor[1]
+  local col = params.range and params.range.start.character or cursor[2]
+  local node = vim.treesitter.get_node
+
   local file = vim.uri_to_fname(params.textDocument.uri)
   local root = vim.fs.root(file, { ".git", ".gitignore" }) or ""
 
@@ -43,8 +52,11 @@ local function get_ctx(params)
   local ctx = {
     buf = buf,
     win = vim.fn.win_findbuf(buf)[1],
-    row = params.range and params.range.start.line or cursor[1],
-    col = params.range and params.range.start.character or cursor[2],
+    row = row,
+    col = col,
+    line = vim.api.nvim_buf_get_lines(buf, row, row + 1, false)[1],
+    node = node,
+    type = node() and node():type(),
     bufname = file,
     root = root,
     ext = vim.fn.fnamemodify(file, ":e"),
@@ -62,16 +74,20 @@ local function code_actions(ctx)
   local built_in = Actions.built_in()
   local custom = Actions.custom()
 
-  local actions = vim.list_extend(custom, built_in)
-  if not ctx then return actions end
+  M.actions = vim.list_extend(custom, built_in)
+  M.actions = M.actions or vim.list_extend(custom, built_in)
+  if not ctx then return M.actions end
 
   return vim
-    .iter(actions)
+    .iter(M.actions)
     :filter(function(action)
       action.ctx = ctx
-      return (action.filetype and vim.tbl_contains(action.filetype, ctx.filetype))
-        or (type(action.filter) == "function" and action.filter(ctx))
-        or (type(action.filter) == "string") and ctx.bufname:match(action.filter)
+      return (action.filetype == nil or vim.tbl_contains(action.filetype, ctx.filetype))
+        and (
+          not action.filter
+          or (type(action.filter) == "function" and action.filter(ctx))
+          or (type(action.filter) == "string") and ctx.bufname:match(action.filter)
+        )
     end)
     :totable()
 end

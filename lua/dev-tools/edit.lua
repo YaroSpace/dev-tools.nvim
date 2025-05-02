@@ -1,14 +1,18 @@
----@class Edit
----@field get_node fun(self: Ctx, type: string, node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
----@field get_lines fun(self: Ctx, l_start?: number, l_end?: number): string[]
----@field set_lines fun(self: Ctx, lines: string[], l_start?: number, l_end?: number)
----@field get_range fun(self: Ctx): string[]
----@field set_range fun(self: Ctx, lines: string[])
+---@class Edit: Ctx
+---@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[]
+---@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number)
+---@field get_range fun(self: Edit): string[]
+---@field set_range fun(self: Edit, lines: string[])
+---@field get_node fun(self: Edit, type: string, node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
+---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil
+---@field get_node_text fun(self: Edit, node?: TSNode): string|nil
 
 ---@type Edit
 local M = {}
 
----Traverses up the tree to find the first node of the specified type
+local ts_utils = require("nvim-treesitter.ts_utils")
+
+---Traverses up the tree to find the first TS node of the specified type
 ---@param type string
 ---@param node? TSNode|nil
 ---@param predicate? fun(node: TSNode): boolean| nil
@@ -27,6 +31,27 @@ M.get_node = function(_, type, node, predicate)
   if node:type() == "chunk" then return end
 
   return M.get_node(_, type, node:parent(), predicate)
+end
+
+-- Get previous node with same parent
+---@param ctx Ctx
+---@param node TSNode
+---@param allow_switch_parents? boolean - allow switching parents if first node
+---@param allow_previous_parent? boolean - allow previous parent if first node and previous parent without children
+M.get_previous_node = function(ctx, node, allow_switch_parents, allow_previous_parent)
+  return ts_utils.get_previous_node(node, allow_switch_parents, allow_previous_parent)
+end
+
+---Get the text of the node
+---@param ctx Ctx
+---@param node? TSNode|nil
+M.get_node_text = function(ctx, node)
+  local ts = vim.treesitter
+
+  node = node or ts:get_node()
+  if not node then return end
+
+  return ts.get_node_text(node, ctx.buf)
 end
 
 ---Get the lines in the buffer

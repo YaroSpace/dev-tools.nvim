@@ -4,8 +4,40 @@ return {
   filetype = { "lua" },
   actions = {
     {
+      title = "Convert fn <-> method",
+      filter = function(ctx)
+        return ctx.edit:get_node("function_declaration") or ctx.edit:get_node("function_definition")
+      end,
+      fn = function(action)
+        local ctx = action.ctx
+        local node = ctx.edit:get_node("function_declaration") or ctx.edit:get_node("function_definition")
+
+        local fn_name, fn_params = node:field("name")[1], node:field("parameters")[1]
+        fn_params = ctx.edit:get_node_text(fn_params)
+
+        if fn_name then
+          fn_name = ctx.edit:get_node_text(fn_name)
+        else
+          fn_name = ctx.edit:get_previous_node(node, true):field("field")[1]
+          fn_name = ctx.edit:get_node_text(fn_name)
+        end
+
+        local fn_text = vim.split(ctx.edit:get_node_text(node), "\n")
+
+        if node:type() == "function_declaration" then
+          fn_text[1] = ("M.%s = function%s"):format(fn_name, fn_params)
+        else
+          fn_text[1] = ("local function %s%s"):format(fn_name, fn_params)
+        end
+
+        if fn_text[1]:find("\n") then return end
+
+        local range = { node:range() }
+        ctx.edit:set_lines(fn_text, range[1], range[3] + 1)
+      end,
+    },
+    {
       title = "Extract variable",
-      filetype = { "lua" },
       fn = function(action)
         local ctx = action.ctx
 

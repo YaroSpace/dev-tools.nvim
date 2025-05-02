@@ -57,6 +57,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ---@field win number - window number
 ---@field row number - current line number
 ---@field col number - current column number
+---@field line string - current line
 ---@field bufname string - full path to file in buffer
 ---@field root string - root directory of the file
 ---@field ext string - file extension
@@ -100,12 +101,14 @@ opts = {
 There are several helper functions to make it easier to create actions:
 
 ```lua
----@class Edit
----@field get_node fun(self: Ctx, type: string, node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
----@field get_lines fun(self: Ctx, l_start?: number, l_end?: number): string[]
----@field set_lines fun(self: Ctx, lines: string[], l_start?: number, l_end?: number)
----@field get_range fun(self: Ctx): string[]
----@field set_range fun(self: Ctx, lines: string[])
+---@class Edit: Ctx
+---@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[]
+---@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number)
+---@field get_range fun(self: Edit): string[]
+---@field set_range fun(self: Edit, lines: string[])
+---@field get_node fun(self: Edit, type: string, node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
+---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil
+---@field get_node_text fun(self: Edit, node?: TSNode): string|nil
 ```
 
 ## Contributing

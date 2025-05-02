@@ -1,18 +1,15 @@
 local Logger = require("dev-tools.logger")
 
 local function get_spec(ctx)
-  local ts = vim.treesitter
   local ids = { "it", "describe", "context", "example", "specify", "test", "pending" }
 
-  local line = ctx.edit:get_lines()[1]
-  local pos = line:find("[^%s%c]") or 0
-
+  local pos = ctx.line:find("[^%s%c]") or 0
   vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 1, pos })
 
   local fn_name, fn_name_txt, fn_args
-  local node = ctx.edit:get_node("function_call", ts.get_node(), function(node)
+  local node = ctx.edit:get_node("function_call", nil, function(node)
     fn_name, fn_args = node:field("name")[1], node:field("arguments")[1]
-    fn_name_txt = ts.get_node_text(fn_name, ctx.buf)
+    fn_name_txt = ctx.edit:get_node_text(fn_name)
 
     return vim.tbl_contains(ids, fn_name_txt)
   end)
