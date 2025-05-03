@@ -25,7 +25,8 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
     },
 
     builtin_actions = {
-      exclude = {}, -- language/category/title of actions to exclude or true to exclude all
+      include = {}, -- filetype/category/title of actions to include
+      exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
     },
 
     debug = true, -- extra debug info on errors
@@ -58,6 +59,9 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ---@field row number - current line number
 ---@field col number - current column number
 ---@field line string - current line
+---@field ts_node TSNode|nil - current TS node
+---@field ts_type string|nil - type of the current TS node
+---@field ts_range table<number, number, number, number>|nil - range of the current TS node
 ---@field bufname string - full path to file in buffer
 ---@field root string - root directory of the file
 ---@field ext string - file extension
@@ -104,9 +108,9 @@ There are several helper functions to make it easier to create actions:
 ---@class Edit: Ctx
 ---@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[]
 ---@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number)
----@field get_range fun(self: Edit): string[]
----@field set_range fun(self: Edit, lines: string[])
----@field get_node fun(self: Edit, type: string, node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
+---@field get_range fun(self: Edit, ls?: number, cs?: number, le?: number, ce?: number): string[]
+---@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number)
+---@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
 ---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil
 ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil
 ```
@@ -123,7 +127,6 @@ All actions are stored in `/lua/dev-tools/actions/`.  Actions specific to a lang
 ```lua
 ---@class Actions
 ---@field category string - category of actions
----@field filter string|nil|fun(ctx: Ctx): boolean - filter to limit the actions category to
 ---@field filetype string[]|nil - filetype to limit the actions category to
 ---@field actions Action[] - list of actions
 
@@ -156,10 +159,11 @@ return {
 #### Refactoring
 
 - [x] Extract variable
+- [-] Extract function
 
 #### Editing
 
-- [x] Split/join table
+- [x] Split/join function/table/conditional
 - [x] Convert JSON to Lua table
 
 ### General

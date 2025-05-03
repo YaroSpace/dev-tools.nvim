@@ -12,7 +12,8 @@ local M = {
   },
 
   builtin_actions = {
-    exclude = {}, -- language/category/title of actions to exclude or true to exclude all
+    include = {}, -- filetype/category/title of actions to include
+    exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
   },
 
   debug = true, -- extra debug info

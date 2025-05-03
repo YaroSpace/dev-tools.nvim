@@ -13,8 +13,9 @@ local M = {
 ---@field row number - current line number
 ---@field col number - current column number
 ---@field line string - current line
----@field node fun(): TSNode|nil - current TS node
----@field type string|nil - type of the current TS node
+---@field ts_node TSNode|nil - current TS node
+---@field ts_type string|nil - type of the current TS node
+---@field ts_range table<number, number, number, number>|nil - range of the current TS node
 ---@field bufname string - full path to file in buffer
 ---@field root string - root directory of the file
 ---@field ext string - file extension
@@ -35,7 +36,7 @@ local function get_ctx(params)
   local cursor = vim.api.nvim_win_get_cursor(vim.fn.bufwinid(buf))
   local row = params.range and params.range.start.line or cursor[1]
   local col = params.range and params.range.start.character or cursor[2]
-  local node = vim.treesitter.get_node
+  local node = vim.treesitter.get_node()
 
   local file = vim.uri_to_fname(params.textDocument.uri)
   local root = vim.fs.root(file, { ".git", ".gitignore" }) or ""
@@ -55,8 +56,8 @@ local function get_ctx(params)
     row = row,
     col = col,
     line = vim.api.nvim_buf_get_lines(buf, row, row + 1, false)[1],
-    node = node,
-    type = node() and node():type(),
+    ts_type = node and node:type() or nil,
+    ts_range = node and { node:range() },
     bufname = file,
     root = root,
     ext = vim.fn.fnamemodify(file, ":e"),
@@ -64,7 +65,12 @@ local function get_ctx(params)
     range = params.range,
   }
 
-  ctx.edit = setmetatable(ctx, { __index = Edit })
+  ctx.edit = setmetatable(ctx, {
+    __index = function(t, k)
+      if k == "ts_node" then return node end
+      return Edit[k] or rawget(t, k)
+    end,
+  })
 
   return ctx
 end

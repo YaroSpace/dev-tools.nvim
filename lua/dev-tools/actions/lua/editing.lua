@@ -1,4 +1,5 @@
 local Logger = require("dev-tools.logger")
+local sj_nodes = { "table_constructor", "if_statement", "function_declaration", "function_definition" }
 
 ---@type Actions
 return {
@@ -6,69 +7,38 @@ return {
   filetype = { "lua" },
   actions = {
     {
-      title = "Split table",
+      title = "Split/join",
       filter = function(ctx)
-        return ctx.edit:get_node("table_constructor")
+        return ctx.edit:get_node(sj_nodes)
       end,
       fn = function(action)
         local ctx = action.ctx
-        local tbl, range = ctx.edit:get_node("table_constructor")
+        local node, range = ctx.edit:get_node(sj_nodes)
+        local type, text = node:type(), ctx.edit:get_node_text(node) or ""
 
-        local tbl_lines = ctx.edit:get_node_text(tbl)
-        if tbl_lines:find("\n") then return end
+        local split = text:find("\n")
+        text = split and text:gsub("\n%s*", " ") or text
 
-        tbl_lines = vim
-          .iter(vim.split(tbl_lines:gsub("[{}]", ""), ","))
-          :map(function(line)
-            return line .. ","
-          end)
-          :totable()
+        local before = ctx.edit:get_range(range[1], 0, range[1], range[2])[1]
+        local after = ctx.edit:get_range(range[3], range[4], range[3], -1)[1]
 
-        local lines = {}
+        if type == "table_constructor" then
+          text = split and text or text:gsub("[{,]", "%1\n"):gsub("}", "\n}")
+        elseif type == "if_statement" then
+          text = split and text or text:gsub("then", "%1\n"):gsub("else", "\n%1"):gsub("end$", "\n%1")
+        elseif type == "function_declaration" or type == "function_definition" then
+          local params = node:field("parameters")[1]
+          params = ctx.edit:get_node_text(params):gsub("[%(%)]", "%%%1")
+          text = split and text or text:gsub(params, "%1\n"):gsub("end$", "\n%1")
+        end
 
-        table.insert(lines, ctx.line:match("^.*{"))
-        vim.list_extend(lines, tbl_lines)
-        table.insert(lines, ctx.line:match("}.*$"))
-
-        ctx.edit:set_lines(lines, range[1], range[1] + 1)
-
+        ctx.edit:set_lines(vim.split(before .. text .. after, "\n"), range[1], range[3] + 1)
         vim.api.nvim_win_set_cursor(ctx.win, { range[1] + 1, 1 })
-        vim.cmd("normal V" .. #lines .. "j=")
+        vim.cmd("normal V" .. #text .. "j=")
       end,
     },
-    {
-      title = "Join table",
-      filter = function(ctx)
-        return ctx.edit:get_node("table_constructor")
-      end,
-      fn = function(action)
-        local ctx = action.ctx
-        local tbl, range = ctx.edit:get_node("table_constructor")
-
-        local tbl_lines = ctx.edit:get_node_text(tbl)
-        if not tbl_lines:find("\n") then return end
-
-        tbl_lines = vim
-          .iter(vim.split(tbl_lines:gsub("[{}\n]", ""), ","))
-          :map(function(line)
-            line = line:match("^%s*(.-)%s*$") or ""
-            return #line > 0 and line or nil
-          end)
-          :totable()
-
-        local lines = table.concat(tbl_lines, ", ")
-        local buf_lines = ctx.edit:get_lines(range[1], range[3] + 1)
-
-        lines = buf_lines[1] .. lines .. buf_lines[#buf_lines]:gsub("^%s*", "")
-
-        ctx.edit:set_lines({ lines }, range[1], range[3] + 1)
-        vim.api.nvim_win_set_cursor(ctx.win, { range[1] + 1, 1 })
-      end,
-    },
-
     {
       title = "Convert from JSON",
-      filetype = { "lua" },
       fn = function(action)
         local ctx = action.ctx
         local lines = ctx.edit:get_lines()

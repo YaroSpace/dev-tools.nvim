@@ -4,7 +4,6 @@ local Utils = require("dev-tools.utils")
 
 ---@class Actions
 ---@field category string - category of actions
----@field filter string|nil|fun(ctx: Ctx): boolean - filter to limit the actions category to
 ---@field filetype string[]|nil - filetype to limit the actions category to
 ---@field actions Action[] - list of actions
 
@@ -52,24 +51,31 @@ M.built_in = function()
 
   local modules = vim
     .iter(vim.fn.glob(actions_path .. "/**/*", false, true))
-    :map(function(path)
-      return not path:find("init.lua") and vim.fn.isdirectory(path) ~= 1 and path:match("actions/(.*)%.lua"):gsub("/", ".") or nil
+    :filter(function(path)
+      return not path:find("init.lua") and vim.fn.isdirectory(path) ~= 1
     end)
     :totable()
 
-  --filter language modules
-  modules = builtin == true and modules
-    or vim.iter(modules):filter(function(module)
-      local lang = module:match(".*%.")
-      return not (lang and vim.tbl_contains(builtin.exclude, lang))
-    end)
-
-  return vim.iter(modules):fold({}, function(acc, module)
-    module = require("dev-tools.actions." .. module)
+  return vim.iter(modules):fold({}, function(acc, path)
+    local module = loadfile(path)()
 
     vim.iter(module.actions):each(function(action)
-      if vim.tbl_contains(builtin.exclude or {}, action.category or module.category) or vim.tbl_contains(builtin.exclude or {}, action.title) then return end
-      acc = vim.list_extend(acc, { make_action(module, action) })
+      if
+        vim.tbl_contains(builtin.exclude or {}, function(v)
+          return vim.tbl_contains({ action.category or module.category, action.title, unpack(action.filetype or {}) }, v)
+        end, { predicate = true })
+      then
+        return
+      end
+
+      if
+        builtin.include == nil
+        or vim.tbl_contains(builtin.include or {}, function(v)
+          return vim.tbl_contains({ action.category or module.category, action.title, unpack(action.filetype or {}) }, v)
+        end, { predicate = true })
+      then
+        acc = vim.list_extend(acc, { make_action(module, action) })
+      end
     end)
 
     return acc

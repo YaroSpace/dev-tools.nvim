@@ -1,9 +1,9 @@
 ---@class Edit: Ctx
 ---@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[]
 ---@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number)
----@field get_range fun(self: Edit): string[]
----@field set_range fun(self: Edit, lines: string[])
----@field get_node fun(self: Edit, type: string, node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
+---@field get_range fun(self: Edit, ls?: number, cs?: number, le?: number, ce?: number): string[]
+---@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number)
+---@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
 ---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil
 ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil
 
@@ -12,13 +12,13 @@ local M = {}
 
 local ts_utils = require("nvim-treesitter.ts_utils")
 
----Traverses up the tree to find the first TS node of the specified type
----@param type string
+---Traverses up the tree to find the first TS node matching specified type/s
+---@param ts_type string|string[]
 ---@param node? TSNode|nil
 ---@param predicate? fun(node: TSNode): boolean| nil
 ---@return TSNode|nil
 ---@return table <number, number, number, number>|nil
-M.get_node = function(_, type, node, predicate)
+M.get_node = function(_, types, node, predicate)
   local ts = vim.treesitter
   predicate = predicate or function()
     return true
@@ -27,10 +27,12 @@ M.get_node = function(_, type, node, predicate)
   node = node or ts.get_node()
   if not node then return end
 
-  if node:type() == type and predicate(node) then return node, { node:range() } end
+  types = type(types) == "string" and { types } or types
+
+  if vim.tbl_contains(types, node:type()) and predicate(node) then return node, { node:range() } end
   if node:type() == "chunk" then return end
 
-  return M.get_node(_, type, node:parent(), predicate)
+  return M.get_node(_, types, node:parent(), predicate)
 end
 
 -- Get previous node with same parent
@@ -74,15 +76,15 @@ end
 
 ---Get the lines in the range of the buffer
 ---@param ctx Ctx
-M.get_range = function(ctx)
-  return vim.api.nvim_buf_get_text(ctx.buf, ctx.range.rc[1], ctx.range.rc[2], ctx.range.rc[3], ctx.range.rc[4], {})
+M.get_range = function(ctx, ls, cs, le, ce)
+  return vim.api.nvim_buf_get_text(ctx.buf, ls or ctx.range.rc[1], cs or ctx.range.rc[2], le or ctx.range.rc[3], ce or ctx.range.rc[4], {})
 end
 
 ---Set the lines range of the buffer
 ---@param ctx Ctx
 ---@param lines string[]
-M.set_range = function(ctx, lines)
-  vim.api.nvim_buf_set_text(ctx.buf, ctx.range.rc[1], ctx.range.rc[2], ctx.range.rc[3], ctx.range.rc[4], lines)
+M.set_range = function(ctx, lines, ls, cs, le, ce)
+  vim.api.nvim_buf_set_text(ctx.buf, ls or ctx.range.rc[1], cs or ctx.range.rc[2], le or ctx.range.rc[3], ce or ctx.range.rc[4], lines)
 end
 
 return M

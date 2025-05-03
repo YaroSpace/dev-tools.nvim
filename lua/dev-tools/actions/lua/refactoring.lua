@@ -6,7 +6,8 @@ return {
     {
       title = "Convert fn <-> method",
       filter = function(ctx)
-        return ctx.edit:get_node("function_declaration") or ctx.edit:get_node("function_definition")
+        local nodes = { "function_declaration", "function_definition" }
+        return ctx.edit:get_node(nodes)
       end,
       fn = function(action)
         local ctx = action.ctx
