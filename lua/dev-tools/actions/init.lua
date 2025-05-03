@@ -3,7 +3,7 @@ local Logger = require("dev-tools.logger")
 local Utils = require("dev-tools.utils")
 
 ---@class Actions
----@field category string - category of actions
+---@field category string|nil - category of actions
 ---@field filetype string[]|nil - filetype to limit the actions category to
 ---@field actions Action[] - list of actions
 
@@ -26,7 +26,23 @@ local function pcall_wrap(title, fn)
   end
 end
 
+local validate_action = function(action)
+  local status, error = pcall(function()
+    vim.validate("title", action.title, { "string" })
+    vim.validate("category", action.category, { "string" }, true)
+    vim.validate("filter", action.filter, { "function", "string" }, true)
+    vim.validate("filetype", action.filetype, "table", true)
+    vim.validate("fn", action.fn, "function")
+  end)
+
+  if not status then return Logger.error("Invalid action: " .. error, 2) end
+
+  return true
+end
+
 local function make_action(module, action)
+  if not validate_action(action) then return end
+
   action = vim.deepcopy(action)
 
   action.category = action.category or module.category
@@ -58,20 +74,19 @@ M.built_in = function()
 
   return vim.iter(modules):fold({}, function(acc, path)
     local module = loadfile(path)()
+    if not module or not type(module.actions) == "table" then return acc end
 
     vim.iter(module.actions):each(function(action)
-      if
-        vim.tbl_contains(builtin.exclude or {}, function(v)
-          return vim.tbl_contains({ action.category or module.category, action.title, unpack(action.filetype or {}) }, v)
-        end, { predicate = true })
-      then
-        return
-      end
+      local tags = { action.category or module.category, action.title, unpack(action.filetype or {}) }
+
+      if vim.tbl_contains(builtin.exclude or {}, function(v)
+        return vim.tbl_contains(tags, v)
+      end, { predicate = true }) then return end
 
       if
-        builtin.include == nil
-        or vim.tbl_contains(builtin.include or {}, function(v)
-          return vim.tbl_contains({ action.category or module.category, action.title, unpack(action.filetype or {}) }, v)
+        (builtin.include == nil or #builtin.include == 0)
+        or vim.tbl_contains(builtin.include, function(v)
+          return vim.tbl_contains(tags, v)
         end, { predicate = true })
       then
         acc = vim.list_extend(acc, { make_action(module, action) })

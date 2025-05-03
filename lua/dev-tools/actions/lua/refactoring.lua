@@ -1,3 +1,22 @@
+local function replace_region(action, prompt, template)
+  local ctx = action.ctx
+
+  vim.ui.input({ prompt = prompt, default = "" }, function(name)
+    if not name then return end
+
+    local body = template:format(name, table.concat(ctx.edit:get_range(), "\n"))
+    body = vim.split(body, "\n")
+
+    ctx.edit:set_range { name }
+    ctx.edit:set_lines(body, ctx.range.rc[1], ctx.range.rc[3])
+
+    vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] - 1, ctx.range.rc[3] + 1 })
+    vim.cmd("normal V" .. #body + 1 .. "j=") -- indent
+
+    vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 2, ctx.range.rc[2] + 1 })
+  end)
+end
+
 ---@type Actions
 return {
   category = "Refactoring",
@@ -40,27 +59,13 @@ return {
     {
       title = "Extract variable",
       fn = function(action)
-        local ctx = action.ctx
-
-        vim.ui.input({ prompt = "Variable name:", default = "" }, function(var_name)
-          if not var_name then return end
-
-          local var_body = ("local %s = %s"):format(var_name, ctx.edit:get_range()[1])
-
-          ctx.edit:set_range { var_name }
-          ctx.edit:set_lines({ var_body }, ctx.range.rc[1], ctx.range.rc[1])
-
-          vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 1, ctx.range.rc[3] + 1 })
-          vim.cmd("normal =0") -- indent
-
-          vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 2, ctx.range.rc[2] + 1 })
-        end)
+        replace_region(action, "Variable name:", "local %s = %s")
       end,
     },
     {
       title = "Extract function",
-      fn = function(ctx)
-        --
+      fn = function(action)
+        replace_region(action, "Function name:", "local function %s()\n%s\nend")
       end,
     },
   },

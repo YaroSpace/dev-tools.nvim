@@ -17,6 +17,7 @@ local M = {
   },
 
   debug = true, -- extra debug info
+  cache = false, -- cache the actions on start
 }
 
 local function merge_opts(opts)

@@ -5,6 +5,7 @@ local Logger = require("dev-tools.logger")
 
 local M = {
   actions = {},
+  commands = {},
 }
 
 ---@class Ctx
@@ -75,13 +76,24 @@ local function get_ctx(params)
   return ctx
 end
 
+local function update_commands()
+  vim.iter(M.actions):each(function(action)
+    M.commands[action.command] = action.fn
+  end)
+end
+
 ---@param ctx Ctx|nil
 local function code_actions(ctx)
   local built_in = Actions.built_in()
   local custom = Actions.custom()
 
-  M.actions = vim.list_extend(custom, built_in)
-  M.actions = M.actions or vim.list_extend(custom, built_in)
+  if Config.cache then
+    M.actions = M.actions and vim.list_extend(custom, built_in)
+  else
+    M.actions = vim.list_extend(custom, built_in)
+    update_commands()
+  end
+
   if not ctx then return M.actions end
 
   return vim
@@ -164,6 +176,9 @@ function M.start_lsp(buf)
   local client_id = vim.lsp.get_clients { name = "dev-tools" }
   -- if client_id then vim.lsp.stop_client(client_id) end
 
+  M.actions = code_actions()
+  update_commands()
+
   client_id = vim.lsp.start({
     name = "dev-tools",
     cmd = server,
@@ -171,10 +186,7 @@ function M.start_lsp(buf)
     bufnr = buf,
     on_init = function(_client) end,
     on_exit = function(_code, _signal) end,
-    commands = vim.iter(code_actions()):fold({}, function(acc, action)
-      acc[action.command] = action.fn
-      return acc
-    end),
+    commands = M.commands,
   }, dispatchers)
 
   return client_id

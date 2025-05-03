@@ -30,6 +30,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
     },
 
     debug = true, -- extra debug info on errors
+    cache = true, -- cache actions at startup
   }
 }
 ```
@@ -137,7 +138,6 @@ return {
   actions = {
     {
       title = "Extract variable",
-      filetype = { "lua" },
       fn = function(action)
         ---
       end,
@@ -159,12 +159,17 @@ return {
 #### Refactoring
 
 - [x] Extract variable
-- [-] Extract function
+- [x] Extract function
 
 #### Editing
 
 - [x] Split/join function/table/conditional
 - [x] Convert JSON to Lua table
+
+#### Specs
+
+- [x] Run/watch all specs
+- [x] Run/watch current spec
 
 ### General
 
@@ -173,8 +178,6 @@ return {
 - [x] Switch between code and spec files
 - [x] Toggle pending
 - [x] Toggle #wip tag
-- [-] Run/watch all specs
-- [-] Run/watch current spec
 
 #### Debugging
 
