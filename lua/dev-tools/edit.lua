@@ -1,11 +1,12 @@
 ---@class Edit: Ctx
----@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[]
----@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number)
----@field get_range fun(self: Edit, ls?: number, cs?: number, le?: number, ce?: number): string[]
----@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number)
----@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
----@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil
----@field get_node_text fun(self: Edit, node?: TSNode): string|nil
+---@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[] - get lines in the buffer
+---@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number) - set lines in the buffer
+---@field get_range fun(self: Edit, ls?: number, cs?: number, le?: number, ce?: number): string[] - get lines in the range of the buffer
+---@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number) - set lines range of the buffer
+---@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil - traverses up the tree to find the first TS node matching specified type/s
+---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil - get previous node with same parent
+---@field get_node_text fun(self: Edit, node?: TSNode): string|nil - get the text of the node
+---@field indent fun(self: Edit, l_start?: number, l_end?: number) - indent range in the buffer
 
 ---@type Edit
 local M = {}
@@ -13,18 +14,18 @@ local M = {}
 local ts_utils = require("nvim-treesitter.ts_utils")
 
 ---Traverses up the tree to find the first TS node matching specified type/s
----@param ts_type string|string[]
+---@param types string|string[]
 ---@param node? TSNode|nil
 ---@param predicate? fun(node: TSNode): boolean| nil
 ---@return TSNode|nil
 ---@return table <number, number, number, number>|nil
-M.get_node = function(_, types, node, predicate)
+M.get_node = function(ctx, types, node, predicate)
   local ts = vim.treesitter
   predicate = predicate or function()
     return true
   end
 
-  node = node or ts.get_node()
+  node = node or ts.get_node { bufnr = ctx.buf, pos = { ctx.row, ctx.col } }
   if not node then return end
 
   types = type(types) == "string" and { types } or types
@@ -85,6 +86,12 @@ end
 ---@param lines string[]
 M.set_range = function(ctx, lines, ls, cs, le, ce)
   vim.api.nvim_buf_set_text(ctx.buf, ls or ctx.range.rc[1], cs or ctx.range.rc[2], le or ctx.range.rc[3], ce or ctx.range.rc[4], lines)
+end
+
+M.indent = function(ctx, l_start, l_end)
+  vim.api.nvim_win_set_cursor(ctx.win, { ctx.range.rc[1] or l_start, 0 })
+  vim.cmd("normal V" .. (ctx.range.rc[3] or l_end) - l_start .. "j=")
+  vim.api.nvim_input("<Esc>")
 end
 
 return M

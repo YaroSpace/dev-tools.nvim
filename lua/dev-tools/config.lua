@@ -16,6 +16,7 @@ local M = {
     exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
   },
 
+  override_ui = true, -- override vim.ui.select
   debug = true, -- extra debug info
   cache = false, -- cache the actions on start
 }

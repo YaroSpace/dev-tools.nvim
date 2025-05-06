@@ -12,6 +12,7 @@ local Utils = require("dev-tools.utils")
 ---@field category string|nil - category of the action
 ---@field filter string|nil|fun(ctx: Ctx): boolean - filter to limit the action to
 ---@field filetype string[]|nil - filetype to limit the action to
+---@field keymap string|nil - acton keymap
 ---@field fn fun(action: ActionCtx) - function to execute the action
 
 ---@class ActionCtx: Action
@@ -32,6 +33,7 @@ local validate_action = function(action)
     vim.validate("category", action.category, { "string" }, true)
     vim.validate("filter", action.filter, { "function", "string" }, true)
     vim.validate("filetype", action.filetype, "table", true)
+    vim.validate("keymap", action.keymap, "string", true)
     vim.validate("fn", action.fn, "function")
   end)
 
@@ -47,7 +49,8 @@ local function make_action(module, action)
 
   action.category = action.category or module.category
   action.command = action.title:gsub("%W", "_"):lower()
-  action.title = action.title .. " (" .. action.category:lower() .. ")"
+  action._title = action.title -- original title
+  action.title = action.title .. " (" .. action.category:lower() .. ")" -- formatted title
 
   action.fn = pcall_wrap(action.title, action.fn)
 
@@ -104,7 +107,12 @@ M.custom = function()
 end
 
 M.register = function(action)
+  local cache = Config.cache
+
   Config.actions = vim.list_extend(Config.actions, { action })
+  require("dev-tools.lsp"):code_actions()
+
+  Config.cache = cache
 end
 
 return M

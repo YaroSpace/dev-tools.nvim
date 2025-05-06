@@ -2,6 +2,7 @@ local Actions = require("dev-tools.actions")
 local Config = require("dev-tools.config")
 local Edit = require("dev-tools.edit")
 local Logger = require("dev-tools.logger")
+local Pickers = require("dev-tools.pickers")
 
 local M = {
   actions = {},
@@ -19,7 +20,6 @@ local M = {
 ---@field ts_range table<number, number, number, number>|nil - range of the current TS node
 ---@field bufname string - full path to file in buffer
 ---@field root string - root directory of the file
----@field ext string - file extension
 ---@field filetype string - filetype
 ---@field range Range|nil - range of the current selection
 ---@field edit Edit - edititng functions
@@ -61,7 +61,6 @@ local function get_ctx(params)
     ts_range = node and { node:range() },
     bufname = file,
     root = root,
-    ext = vim.fn.fnamemodify(file, ":e"),
     filetype = vim.api.nvim_get_option_value("filetype", { buf = buf }),
     range = params.range,
   }
@@ -76,7 +75,7 @@ local function get_ctx(params)
   return ctx
 end
 
-local function update_commands()
+local function update_lsp_commands()
   vim.iter(M.actions):each(function(action)
     M.commands[action.command] = action.fn
   end)
@@ -87,11 +86,9 @@ local function code_actions(ctx)
   local built_in = Actions.built_in()
   local custom = Actions.custom()
 
-  if Config.cache then
-    M.actions = M.actions and vim.list_extend(custom, built_in)
-  else
+  if not (M.actions and Config.cache) then
     M.actions = vim.list_extend(custom, built_in)
-    update_commands()
+    update_lsp_commands()
   end
 
   if not ctx then return M.actions end
@@ -162,6 +159,7 @@ M.start = function(buf, ft)
   if not vim.tbl_contains(Config.filetypes.include or {}, ft) then return end
 
   M.start_lsp(buf)
+  _ = Config.override_ui and Pickers.stub()
 end
 
 function M.start_lsp(buf)
@@ -174,10 +172,8 @@ function M.start_lsp(buf)
   }
 
   local client_id = vim.lsp.get_clients { name = "dev-tools" }
-  -- if client_id then vim.lsp.stop_client(client_id) end
 
   M.actions = code_actions()
-  update_commands()
 
   client_id = vim.lsp.start({
     name = "dev-tools",
