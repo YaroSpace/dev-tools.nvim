@@ -9,7 +9,7 @@ return {
     {
       title = "Split/join",
       filter = function(ctx)
-        return ctx.edit:get_node(sj_nodes)
+        return ctx.edit:get_node(sj_nodes) and true
       end,
       fn = function(action)
         local ctx = action.ctx
@@ -33,8 +33,7 @@ return {
         end
 
         ctx.edit:set_lines(vim.split(before .. text .. after, "\n"), range[1], range[3] + 1)
-        vim.api.nvim_win_set_cursor(ctx.win, { range[1] + 1, 1 })
-        vim.cmd("normal V" .. #text .. "j=")
+        ctx.edit:indent(range[1], range[3] + 1)
       end,
     },
     {
@@ -50,9 +49,8 @@ return {
         if not status then return Logger.error("Error parsing JSON: " .. json) end
 
         lines = vim.split(vim.inspect(json), "\n")
-
         ctx.edit:set_lines(lines)
-        vim.cmd("normal V" .. #lines .. "j=")
+        ctx.edit:indent()
       end,
     },
   },

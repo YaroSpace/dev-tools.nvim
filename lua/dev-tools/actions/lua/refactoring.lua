@@ -7,12 +7,14 @@ local function replace_region(action, prompt, template)
     local body = template:format(name, table.concat(ctx.edit:get_range(), "\n"))
     body = vim.split(body, "\n")
 
-    ctx.edit:set_range { name }
-    ctx.edit:set_lines(body, ctx.range.rc[1], ctx.range.rc[3])
+    if prompt:find("Variable") then
+      ctx.edit:set_range { name }
+      ctx.edit:set_lines(body, ctx.range.rc[1], ctx.range.rc[1])
+    else
+      ctx.edit:set_lines(body, ctx.range.rc[1], ctx.range.rc[3] + 1)
+    end
 
-    vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] - 1, ctx.range.rc[3] + 1 })
-    vim.cmd("normal V" .. #body + 1 .. "j=") -- indent
-
+    ctx.edit:indent(ctx.range.rc[1] - 1, ctx.range.rc[3] + 1)
     vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 2, ctx.range.rc[2] + 1 })
   end)
 end

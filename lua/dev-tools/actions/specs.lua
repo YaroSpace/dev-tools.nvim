@@ -43,6 +43,7 @@ return {
     },
     {
       title = "Toggle wip",
+      keymap = "<M-l>",
       fn = function(action)
         local ctx = action.ctx
 
