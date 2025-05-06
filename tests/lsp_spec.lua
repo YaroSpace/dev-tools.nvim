@@ -1,0 +1,5 @@
+describe("LSP server", function()
+  it("starts", function()
+    LOG("Starting LSP server")
+  end)
+end)
