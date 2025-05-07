@@ -29,6 +29,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
       exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
     },
 
+    override_ui = true, -- override vim.ui.select with dev-tools actions picker
     debug = true, -- extra debug info on errors
     cache = true, -- cache actions at startup
   }
@@ -47,8 +48,9 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ---@class Action
 ---@field title string - title of the action
 ---@field category string|nil - category of the action
----@field filter string|nil|fun(ctx: Ctx): boolean - filter to limit the action to
+---@field filter string|nil|fun(ctx: Ctx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
+---@field keymap string|nil - acton keymap (local to picker)
 ---@field fn fun(action: ActionCtx) - function to execute the action
 
 ---@class ActionCtx: Action
@@ -114,6 +116,7 @@ There are several helper functions to make it easier to create actions:
 ---@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
 ---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil
 ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil
+---@field indent fun(self: Edit, l_start?: number, l_end?: number) - indent range in the buffer
 ```
 
 ## Contributing

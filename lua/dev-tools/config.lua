@@ -17,12 +17,12 @@ local M = {
   },
 
   override_ui = true, -- override vim.ui.select
-  debug = true, -- extra debug info
-  cache = false, -- cache the actions on start
+  debug = false, -- extra debug info
+  cache = true, -- cache the actions on start
 }
 
 local function merge_opts(opts)
-  for k, v in pairs(opts) do
+  for k, v in pairs(opts or {}) do
     if type(v) == "table" and type(M[k]) == "table" then
       M[k] = vim.tbl_deep_extend("force", M[k], v)
     else

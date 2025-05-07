@@ -21,9 +21,7 @@ end
 ---@param opts Config
 M.setup = function(opts)
   Config.setup(opts)
-
   init()
-
   return Config
 end
 

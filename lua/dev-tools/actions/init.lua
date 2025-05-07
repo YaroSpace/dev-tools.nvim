@@ -10,9 +10,9 @@ local Utils = require("dev-tools.utils")
 ---@class Action
 ---@field title string - title of the action
 ---@field category string|nil - category of the action
----@field filter string|nil|fun(ctx: Ctx): boolean - filter to limit the action to
+---@field filter string|nil|fun(ctx: Ctx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
----@field keymap string|nil - acton keymap
+---@field keymap string|nil - acton keymap (local to picker)
 ---@field fn fun(action: ActionCtx) - function to execute the action
 
 ---@class ActionCtx: Action
@@ -80,7 +80,7 @@ M.built_in = function()
     if not module or not type(module.actions) == "table" then return acc end
 
     vim.iter(module.actions):each(function(action)
-      local tags = { action.category or module.category, action.title, unpack(action.filetype or {}) }
+      local tags = vim.list_extend({ action.category or module.category, action.title }, (action.filetype or module.filetype or {}))
 
       if vim.tbl_contains(builtin.exclude or {}, function(v)
         return vim.tbl_contains(tags, v)
@@ -110,7 +110,7 @@ M.register = function(action)
   local cache = Config.cache
 
   Config.actions = vim.list_extend(Config.actions, { action })
-  require("dev-tools.lsp"):code_actions()
+  require("dev-tools.lsp").code_actions()
 
   Config.cache = cache
 end

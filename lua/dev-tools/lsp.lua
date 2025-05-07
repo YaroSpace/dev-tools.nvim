@@ -86,7 +86,7 @@ local function code_actions(ctx)
   local built_in = Actions.built_in()
   local custom = Actions.custom()
 
-  if not (M.actions and Config.cache) then
+  if not (#M.actions > 0 and Config.cache) then
     M.actions = vim.list_extend(custom, built_in)
     update_lsp_commands()
   end
@@ -187,5 +187,8 @@ function M.start_lsp(buf)
 
   return client_id
 end
+
+M.code_actions = code_actions
+M.get_ctx = get_ctx
 
 return M
