@@ -15,6 +15,13 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 {
   'yarospace/dev-tools.nvim',
+  dependencies = { "nvim-treesitter/nvim-treesitter" },
+  specs = {
+    {
+      "folke/snacks.nvim",
+      opts = { picker = { enabled = true } },
+    },
+  },
   ---@type Config
   opts = {
     actions = {},
@@ -30,11 +37,14 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
     },
 
     override_ui = true, -- override vim.ui.select with dev-tools actions picker
-    debug = true, -- extra debug info on errors
-    cache = true, -- cache actions at startup
+    debug = false, -- extra debug info on errors
+    cache = true, -- cache actions at startup (disable when developing actions)
   }
 }
 ```
+
+> [!NOTE]
+> Dev-tools picker uses Snacks.nvim, which is included as a dependency.  If you do not wish to use Dev-tools picker, you can set `opts.override_ui = false` and remove it from the `specs` section.
 
 ## Usage
 
@@ -186,7 +196,9 @@ return {
 #### Debugging
 
 - [x] Log variable under cursor
-- [-] Trace
+- [x] Log with trace
+- [x] Log on condition
+- [x] Log in spec
 
 ## License
 
