@@ -44,12 +44,17 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```
 
 > [!NOTE]
-> Dev-tools picker uses Snacks.nvim, which is included as a dependency.  If you do not wish to use Dev-tools picker, you can set `opts.override_ui = false` and remove it from the `specs` section.
+> Dev-tools picker uses Snacks.nvim picker module, which is included as a dependency.  If you do not wish to use Dev-tools picker, you can set `opts.override_ui = false` and remove it from the `specs` section.
 
 ## Usage
 
 - Code actions are accessible via the default LSP keymaps, e.g. `gra`, `<leader>ca`, `<leader>la`, etc. 
 - Last action is dot-repeatable.
+
+Dev-tools actions picker is an enhanced version of the default picker, which provides extra info about the actions, live filtering and actions keymaps.
+
+- Specifying `keymap` in the action will add a keymap to the action in the picker.
+- `<C-b>` will cycle through categories filter
 
 ## Adding code actions
 

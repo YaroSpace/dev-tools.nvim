@@ -139,3 +139,5 @@ describe("LSP server", function()
 end)
 
 --- custom picker
+--- show action info
+--- set local keymaps

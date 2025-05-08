@@ -1,9 +1,10 @@
 local has_snacks, snacks_picker = pcall(require, "snacks.picker")
+local Config = require("dev-tools.config")
 
 local M = {}
 
 ---@return snacks.picker.format
-function format_item(count, width_title, width_category)
+local function format_item(count, width_title, width_category)
   return function(item)
     local ret = {} ---@type snacks.picker.Highlight[]
 
@@ -37,30 +38,15 @@ end
 local function select_actions(items, _, on_choice)
   local width_title, width_category = 0, 0
   local finder_items, actions, keys = {}, {}, {}
+  local categories, category_idx = {}, 0
   local completed = false
-
-  local function run_action(picker, item, action)
-    if completed then return end
-
-    item = action and vim.iter(finder_items):find(function(_item)
-      return _item.keymap == action.name
-    end) or item
-
-    completed = true
-    picker:close()
-
-    vim.schedule(function()
-      on_choice(item and item.item, item and item.idx)
-    end)
-  end
-
-  actions.confirm = run_action
 
   for idx, item in ipairs(items) do
     local text = item.action.title
 
     item.action._title = item.action._title or item.action.title
     item.action.category = item.action.category or ""
+    _ = not vim.tbl_contains(categories, item.action.category) and table.insert(categories, item.action.category)
 
     width_title = math.max(width_title, #item.action._title)
     width_category = math.max(width_category, #item.action.category)
@@ -77,18 +63,44 @@ local function select_actions(items, _, on_choice)
 
     if key then
       keys[key] = { key, mode = { "n", "i" }, desc = item.action._title }
-      actions[key] = run_action
+      actions[key] = actions.confirm
     end
   end
 
-  local height = math.floor(math.min(vim.o.lines * 0.8 - 10, #items + 2) + 0.5)
+  actions.confirm = function(picker, item, action)
+    if completed then return end
 
-  return snacks_picker.pick {
+    item = action and vim.iter(finder_items):find(function(_item)
+      return _item.keymap == action.name
+    end) or item
+
+    completed = true
+    picker:close()
+
+    vim.schedule(function()
+      on_choice(item and item.item, item and item.idx)
+    end)
+  end
+
+  actions.filter_category = function(picker)
+    category_idx = category_idx + 1
+
+    local next_category = categories[category_idx % #categories] or ""
+    local input = actions.picker.input
+
+    input.filter.search = next_category
+    input.filter.pattern = next_category:lower()
+    input.picker:find { refresh = true }
+  end
+
+  keys[Config.ui.keymaps.filter] = { actions.filter_category, mode = { "n", "i" }, desc = "Filter by category" }
+
+  actions.picker = snacks_picker.pick {
     source = "select",
     items = finder_items,
-    format = format_item(#items, width_title, width_category),
+    format = format_item(#finder_items, width_title, width_category),
     title = "Code actions",
-    layout = { preview = false, layout = { height = height } },
+    layout = { layout = { height = math.floor(math.min(vim.o.lines * 0.8 - 10, #finder_items + 2) + 0.5) } },
 
     win = { input = { keys = keys } },
     actions = actions,

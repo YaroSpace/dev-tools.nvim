@@ -30,6 +30,11 @@ local M = {
   },
 
   override_ui = true, -- override vim.ui.select
+
+  ui = {
+    keymaps = { filter = "<C-b>" },
+  },
+
   debug = false, -- extra debug info
   cache = true, -- cache the actions on start
 }
