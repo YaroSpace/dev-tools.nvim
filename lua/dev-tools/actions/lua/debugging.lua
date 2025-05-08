@@ -36,7 +36,6 @@ return {
     },
     {
       title = "Log in spec",
-      filter = "_spec",
       fn = function(action)
         insert_log(action, "DevTools.spec")
       end,

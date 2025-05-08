@@ -44,7 +44,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```
 
 > [!NOTE]
-> Dev-tools picker uses Snacks.nvim picker module, which is included as a dependency.  If you do not wish to use Dev-tools picker, you can set `opts.override_ui = false` and remove it from the `specs` section.
+> Dev-tools picker uses Snacks.nvim picker module, which is included as a dependency.  If you do not wish to use it, you can set `opts.override_ui = false` and remove Snacks from the `specs` section.
 
 ## Usage
 
@@ -53,12 +53,17 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 Dev-tools actions picker is an enhanced version of the default picker, which provides extra info about the actions, live filtering and actions keymaps.
 
-- Specifying `keymap` in the action will add a keymap to the action in the picker.
+![Code Actions UI](assets/code_actions.png)
+
+- Specifying `keymap` in the action spec will add a keymap to the action in the picker.
 - `<C-b>` will cycle through categories filter
+
+![Code Actions Filter](assets/code_actions_filtered.png)
 
 ## Adding code actions
 
-- Custom actions can be added to the `opts.actions` table in your configuration or registered via `require('dev-tools').register_action({})`
+- Custom actions can be added to the `opts.actions` table in your configuration  
+or registered via `require('dev-tools').register_action({})`
 
 ```lua
 ---@class Action
@@ -109,10 +114,8 @@ opts = {
           ctx.edit:set_range { var_name }
           ctx.edit:set_lines({ var_body }, ctx.range.rc[1], ctx.range.rc[1])
 
-          vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 1, ctx.range.rc[3] + 1 })
-          vim.cmd("normal =0") -- indent
-
-          vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 2, ctx.range.rc[2] + 1 })
+          ctx.edit:indent(ctx.range.rc[1] - 1, ctx.range.rc[3] + 1)
+          ctx.edit:set_cursor(ctx.range.rc[1] + 2, ctx.range.rc[2] + 1)
         end)
       end,
     },
@@ -124,13 +127,13 @@ There are several helper functions to make it easier to create actions:
 
 ```lua
 ---@class Edit: Ctx
----@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[]
----@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number)
----@field get_range fun(self: Edit, ls?: number, cs?: number, le?: number, ce?: number): string[]
----@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number)
----@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil
----@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil
----@field get_node_text fun(self: Edit, node?: TSNode): string|nil
+---@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[] - get lines in the buffer
+---@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number) - set lines in the buffer
+---@field get_range fun(self: Edit, ls?: number, cs?: number, le?: number, ce?: number): string[] - get lines in the range of the buffer
+---@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number) - set lines range of the buffer
+---@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil - traverses up the tree to find the first TS node matching specified type/s
+---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil - get previous node with same parent
+---@field get_node_text fun(self: Edit, node?: TSNode): string|nil - get the text of the node
 ---@field indent fun(self: Edit, l_start?: number, l_end?: number) - indent range in the buffer
 ---@field set_cursor fun(self: Edit, row?: number, col?: number) - set the cursor in the buffer
 ```
@@ -150,6 +153,14 @@ All actions are stored in `/lua/dev-tools/actions/`.  Actions specific to a lang
 ---@field filetype string[]|nil - filetype to limit the actions category to
 ---@field actions Action[] - list of actions
 
+---@class Action
+---@field title string - title of the action
+---@field category string|nil - category of the action
+---@field filter string|nil|fun(ctx: Ctx): boolean - function or pattern to match against buffer name
+---@field filetype string[]|nil - filetype to limit the action to
+---@field keymap string|nil - acton keymap (local to picker)
+---@field fn fun(action: ActionCtx) - function to execute the action
+
 ---@type Actions
 return {
   category = "Refactoring",
@@ -157,12 +168,15 @@ return {
   actions = {
     {
       title = "Extract variable",
+      filter = "_spec",
       fn = function(action)
         ---
       end,
     },
     {
       title = "Extract function",
+      filter = function(ctx) return ctx.root:match("project") end,
+      keymap = "<C-e>",
       fn = function(ctx)
         --
       end,
@@ -189,8 +203,6 @@ return {
 
 - [x] Run/watch all specs
 - [x] Run/watch current spec
-
-### General
 
 #### Specs
 

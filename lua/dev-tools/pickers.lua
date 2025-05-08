@@ -41,32 +41,6 @@ local function select_actions(items, _, on_choice)
   local categories, category_idx = {}, 0
   local completed = false
 
-  for idx, item in ipairs(items) do
-    local text = item.action.title
-
-    item.action._title = item.action._title or item.action.title
-    item.action.category = item.action.category or ""
-    _ = not vim.tbl_contains(categories, item.action.category) and table.insert(categories, item.action.category)
-
-    width_title = math.max(width_title, #item.action._title)
-    width_category = math.max(width_category, #item.action.category)
-
-    local key = item.action.keymap
-
-    table.insert(finder_items, {
-      formatted = text,
-      text = idx .. " " .. text,
-      item = item,
-      keymap = key,
-      idx = idx,
-    })
-
-    if key then
-      keys[key] = { key, mode = { "n", "i" }, desc = item.action._title }
-      actions[key] = actions.confirm
-    end
-  end
-
   actions.confirm = function(picker, item, action)
     if completed then return end
 
@@ -82,10 +56,37 @@ local function select_actions(items, _, on_choice)
     end)
   end
 
-  actions.filter_category = function(picker)
+  for idx, item in ipairs(items) do
+    local text = item.action.title
+
+    item.action._title = item.action._title or item.action.title
+    item.action.category = item.action.category or ""
+    _ = not vim.tbl_contains(categories, item.action.category) and table.insert(categories, item.action.category)
+
+    width_title = math.max(width_title, #item.action._title)
+    width_category = math.max(width_category, #item.action.category)
+
+    local key = item.action.keymap
+
+    table.insert(finder_items, {
+      formatted = text,
+      text = idx .. " " .. text,
+      category = item.action.category,
+      item = item,
+      keymap = key,
+      idx = idx,
+    })
+
+    if key then
+      keys[key] = { key, mode = { "n", "i" }, desc = item.action._title }
+      actions[key] = actions.confirm
+    end
+  end
+
+  actions.filter_category = function()
     category_idx = category_idx + 1
 
-    local next_category = categories[category_idx % #categories] or ""
+    local next_category = categories[category_idx % (#categories + 1)] or ""
     local input = actions.picker.input
 
     input.filter.search = next_category
@@ -97,14 +98,16 @@ local function select_actions(items, _, on_choice)
 
   actions.picker = snacks_picker.pick {
     source = "select",
+    title = "Code actions",
+
     items = finder_items,
     format = format_item(#finder_items, width_title, width_category),
-    title = "Code actions",
+    sort = { fields = { "category", "formatter", "idx" } },
+
     layout = { layout = { height = math.floor(math.min(vim.o.lines * 0.8 - 10, #finder_items + 2) + 0.5) } },
-
     win = { input = { keys = keys } },
-    actions = actions,
 
+    actions = actions,
     on_close = function()
       if completed then return end
       completed = true
