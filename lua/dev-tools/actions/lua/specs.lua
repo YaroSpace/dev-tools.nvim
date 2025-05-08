@@ -1,21 +1,24 @@
-local tree_cmd = "git ls-files -cdmo --exclude-standard"
-local test_cmd = "nvim -l tests/minit.lua tests --shuffle-tests -v"
-local test_tag = test_cmd .. " --tags=wip"
+local Opts = require("dev-tools.config").builtin_opts.specs
+
+local tree_cmd = Opts.tree_cmd or "git ls-files -cdmo --exclude-standard"
+local test_cmd = Opts.test_cmd or "nvim -l tests/minit.lua tests --shuffle-tests -v"
+local test_tag = test_cmd .. (Opts.test_tag or " --tags=wip")
 
 local function watch_cmd(cmd)
   return ("while sleep 0.1; do %s | entr -d -c %s; done"):format(tree_cmd, cmd)
 end
 
-local function open_terminal(cmd, root)
-  Snacks.terminal.toggle(cmd, {
-    shell = "/usr/bin/bash",
-    cwd = root or vim.uv.cwd(),
-    auto_close = false,
-    start_insert = false,
-    auto_insert = false,
-    win = { position = "right", width = vim.o.columns * 0.4, wo = { winbar = "" } },
-  })
-end
+local open_terminal = Opts.terminal_cmd
+  or function(cmd, root)
+    Snacks.terminal.toggle(cmd, {
+      shell = "/usr/bin/bash",
+      cwd = root or vim.uv.cwd(),
+      auto_close = false,
+      start_insert = false,
+      auto_insert = false,
+      win = { position = "right", width = vim.o.columns * 0.4, wo = { winbar = "" } },
+    })
+  end
 
 ---@type Actions
 return {

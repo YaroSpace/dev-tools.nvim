@@ -117,6 +117,7 @@ There are several helper functions to make it easier to create actions:
 ---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil
 ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil
 ---@field indent fun(self: Edit, l_start?: number, l_end?: number) - indent range in the buffer
+---@field set_cursor fun(self: Edit, row?: number, col?: number) - set the cursor in the buffer
 ```
 
 ## Contributing
@@ -184,7 +185,7 @@ return {
 
 #### Debugging
 
-- [-] Log variable under cursor
+- [x] Log variable under cursor
 - [-] Trace
 
 ## License

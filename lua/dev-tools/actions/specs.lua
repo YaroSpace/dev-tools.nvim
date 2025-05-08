@@ -4,7 +4,7 @@ local function get_spec(ctx)
   local ids = { "it", "describe", "context", "example", "specify", "test", "pending" }
 
   local pos = ctx.line:find("[^%s%c]") or 0
-  vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 1, pos })
+  ctx.edit:set_cursor(ctx.range.rc[1] + 1, pos)
 
   local fn_name, fn_name_txt, fn_args
   local node = ctx.edit:get_node("function_call", nil, function(node)

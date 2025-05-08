@@ -15,7 +15,7 @@ local function replace_region(action, prompt, template)
     end
 
     ctx.edit:indent(ctx.range.rc[1] - 1, ctx.range.rc[3] + 1)
-    vim.api.nvim_win_set_cursor(0, { ctx.range.rc[1] + 2, ctx.range.rc[2] + 1 })
+    ctx.edit:set_cursor(ctx.range.rc[1] + 2, ctx.range.rc[2] + 1)
   end)
 end
 
@@ -28,7 +28,7 @@ return {
       title = "Convert fn <-> method",
       filter = function(ctx)
         local nodes = { "function_declaration", "function_definition" }
-        return ctx.edit:get_node(nodes)
+        return ctx.edit:get_node(nodes) and true
       end,
       fn = function(action)
         local ctx = action.ctx

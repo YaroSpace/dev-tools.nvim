@@ -100,7 +100,10 @@ M.built_in = function()
     :totable()
 
   return vim.iter(modules):fold({}, function(acc, path)
-    local module = loadfile(path)()
+    local module, error = loadfile(path)
+    if not module then return acc, Logger.error("Error loading module " .. path .. ":\n" .. error, 2) end
+
+    module = module()
     if not module or not type(module.actions) == "table" then return acc end
 
     vim.iter(module.actions):each(function(action)

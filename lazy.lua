@@ -3,7 +3,6 @@ return {
   lazy = true,
   event = "BufEnter",
   dependencies = {
-    "folke/snacks.nvim",
     "nvim-treesitter/nvim-treesitter",
   },
   specs = {

@@ -16,6 +16,19 @@ local M = {
     exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
   },
 
+  builtin_opts = { -- default options for actions
+    specs = {
+      tree_cmd = nil,
+      test_cmd = nil,
+      test_tag = nil,
+      terminal_cmd = nil,
+    },
+
+    debug = {
+      logger = nil,
+    },
+  },
+
   override_ui = true, -- override vim.ui.select
   debug = false, -- extra debug info
   cache = true, -- cache the actions on start

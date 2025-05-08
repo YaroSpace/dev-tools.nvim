@@ -7,6 +7,7 @@
 ---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil - get previous node with same parent
 ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil - get the text of the node
 ---@field indent fun(self: Edit, l_start?: number, l_end?: number) - indent range in the buffer
+---@field set_cursor fun(self: Edit, row?: number, col?: number) - set the cursor in the buffer
 
 ---@type Edit
 local M = {}
@@ -88,10 +89,25 @@ M.set_range = function(ctx, lines, ls, cs, le, ce)
   vim.api.nvim_buf_set_text(ctx.buf, ls or ctx.range.rc[1], cs or ctx.range.rc[2], le or ctx.range.rc[3], ce or ctx.range.rc[4], lines)
 end
 
+---Indent range in the buffer
+---@param ctx Ctx
+---@param l_start? number
+---@param l_end? number
 M.indent = function(ctx, l_start, l_end)
-  vim.api.nvim_win_set_cursor(ctx.win, { ctx.range.rc[1] or l_start, 0 })
-  vim.cmd("normal V" .. (ctx.range.rc[3] or l_end) - l_start .. "j=")
+  l_start = l_start or ctx.range.rc[1] or ctx.row
+  l_end = l_end or ctx.range.rc[3] or ctx.row
+
+  vim.api.nvim_win_set_cursor(ctx.win, { l_start, 0 })
+  vim.cmd("normal V" .. l_end - l_start .. "j=")
   vim.api.nvim_input("<Esc>")
+end
+
+--- Set the cursor in the buffer
+---@param ctx Ctx
+---@param row? number
+---@param col? number
+M.set_cursor = function(ctx, row, col)
+  vim.api.nvim_win_set_cursor(ctx.win, { row or ctx.range.rc[1] or ctx.row, col or ctx.range.rc[2] or ctx.col })
 end
 
 return M

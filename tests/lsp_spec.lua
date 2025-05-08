@@ -54,8 +54,15 @@ describe("LSP server", function()
         title = "Test Action 2",
         fn = function() end,
       }
+      dev_tools.register_action {
+        { title = "Test Action 3", fn = function() end },
+
+        { title = "Test Action 4", fn = function() end },
+      }
       assert.is_same(config.actions[1].title, "Test Action")
       assert.is_same(config.actions[2].title, "Test Action 2")
+      assert.is_same(config.actions[3].title, "Test Action 3")
+      assert.is_same(config.actions[4].title, "Test Action 4")
     end)
   end)
 
