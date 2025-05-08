@@ -20,10 +20,34 @@ local Utils = require("dev-tools.utils")
 
 local M = {}
 
+M.last_action = nil
+
 local function pcall_wrap(title, fn)
-  return function(...)
-    local status, error = xpcall(fn, debug.traceback, ...)
+  return function(action)
+    local status, error = xpcall(fn, debug.traceback, action)
     if not status then return Logger.error("Error executing " .. title .. ":\n" .. error, 2) end
+
+    M.set_last_action(title, fn, action)
+  end
+end
+
+M.set_last_action = function(title, fn, action)
+  vim.o.operatorfunc = "v:lua.require'dev-tools.actions'.last_action"
+
+  M.last_action = function() end
+  vim.cmd.normal("g@l")
+
+  M.last_action = function()
+    local ctx = require("dev-tools.lsp").get_ctx(vim.lsp.util.make_range_params(0, "utf-8"))
+    action.ctx = ctx
+
+    if
+      not action.filter
+      or (type(action.filter) == "function" and action.filter(ctx))
+      or (type(action.filter) == "string") and ctx.bufname:match(action.filter)
+    then
+      pcall_wrap(title, fn)(action)
+    end
   end
 end
 
@@ -106,10 +130,14 @@ M.custom = function()
   end)
 end
 
-M.register = function(action)
-  local cache = Config.cache
+M.register = function(actions)
+  actions = vim.islist(actions) and actions or { actions }
 
-  Config.actions = vim.list_extend(Config.actions, { action })
+  vim.iter(actions):each(function(action)
+    Config.actions = vim.list_extend(Config.actions, { action })
+  end)
+
+  local cache = Config.cache
   require("dev-tools.lsp").code_actions()
 
   Config.cache = cache

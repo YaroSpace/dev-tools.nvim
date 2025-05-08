@@ -13,9 +13,9 @@ local function init()
   })
 end
 
----@param action Action
-M.register_action = function(action)
-  Actions.register(action)
+---@param actions Action|Actions[]
+M.register_action = function(actions)
+  Actions.register(actions)
 end
 
 ---@param opts Config

@@ -29,7 +29,7 @@ local M = {
 ---@field end {line: number, character: number} - end position of the range
 ---@field rc table<number, number, number, number> - row/col format
 
----@return ActionCtx
+---@return Ctx
 local function get_ctx(params)
   if not (params and params.textDocument) then return {} end
 
@@ -171,11 +171,9 @@ function M.start_lsp(buf)
     end,
   }
 
-  local client_id = vim.lsp.get_clients { name = "dev-tools" }
-
   M.actions = code_actions()
 
-  client_id = vim.lsp.start({
+  local client_id = vim.lsp.start({
     name = "dev-tools",
     cmd = server,
     root_dir = "",

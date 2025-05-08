@@ -39,6 +39,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ## Usage
 
 - Code actions are accessible via the default LSP keymaps, e.g. `gra`, `<leader>ca`, `<leader>la`, etc. 
+- Last action is dot-repeatable.
 
 ## Adding code actions
 
@@ -67,7 +68,6 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ---@field ts_range table<number, number, number, number>|nil - range of the current TS node
 ---@field bufname string - full path to file in buffer
 ---@field root string - root directory of the file
----@field ext string - file extension
 ---@field filetype string - filetype
 ---@field range Range|nil - range of the current selection
 ---@field edit Edit - edititng functions

@@ -91,26 +91,44 @@ describe("LSP server", function()
       assert.is_false(h.contains(result, { "Watch specs", "Split/join" }))
     end)
 
-    it("#wip filters actions on call", function()
+    it("filters actions on call", function()
+      dev_tools.register_action {
+        { title = "Test Action 2", filter = "test", fn = function() end, filetype = { "rs" } },
+        { title = "Test Action 3", filter = "other", fn = function() end, filetype = { "rs" } },
+        {
+          title = "Test Action 4",
+          filter = function(ctx)
+            return ctx.bufname:match("test")
+          end,
+          fn = function() end,
+          filetype = { "rs" },
+        },
+        {
+          title = "Test Action 5",
+          filter = function(ctx)
+            return ctx.bufname:match("other")
+          end,
+          fn = function() end,
+          filetype = { "rs" },
+        },
+      }
+
       local buf = h.create_buf({}, "test.lua")
       vim.api.nvim_set_option_value("filetype", "rs", { buf = buf })
 
       local ctx = lsp.get_ctx { textDocument = { uri = vim.uri_from_bufnr(buf) } }
-
       local actions = lsp.code_actions(ctx)
-      --TODO: add filter on bufname and fun
 
-      local result = vim
+      result = vim
         .iter(actions)
-        :filter(function(action)
-          return action._title == "Test Action"
+        :map(function(action)
+          return action._title
         end)
         :totable()
 
-      assert.is_same(result[1]._title, "Test Action")
+      assert.is_true(h.contains(result, { "Test Action", "Test Action 2", "Test Action 4" }))
     end)
   end)
 end)
 
---- filter actions on call
 --- custom picker
