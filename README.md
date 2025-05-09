@@ -1,6 +1,6 @@
 # dev-tools.nvim
 
-A Neovim plugin that provides an in-process LSP server, a community library and a convenient interface for customization - to enhance your Neovim with custom code action.
+A Neovim plugin that provides an in-process LSP server, a community library and a convenient interface for customization and enhancement of your Neovim with custom code actions.
 
 ## Features
 

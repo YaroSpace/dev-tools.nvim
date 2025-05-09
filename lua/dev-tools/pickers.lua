@@ -16,6 +16,7 @@ local function format_item(count, width_title, width_category)
 
     local action, ctx = item.item.action, item.item.ctx
     local client = vim.lsp.get_client_by_id(ctx.client_id)
+
     local keymap = action.keymap or ""
 
     table.insert(ret, { action._title .. (" "):rep(width_title - #action._title) })
@@ -30,6 +31,9 @@ local function format_item(count, width_title, width_category)
       ret[#ret + 1] = { " " }
       ret[#ret + 1] = { ("[%s]"):format(client.name), "SnacksPickerSpecial" }
     end
+
+    table.insert(ret, { " " })
+    table.insert(ret, { action.desc })
 
     return ret
   end

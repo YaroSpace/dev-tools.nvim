@@ -35,9 +35,10 @@ return {
         ctx.edit:set_lines(vim.split(before .. text .. after, "\n"), range[1], range[3] + 1)
         ctx.edit:indent(range[1], range[3] + 1)
       end,
+      desc = "Table/condition/function",
     },
     {
-      title = "Convert from JSON",
+      title = "Convert JSON->Lua table",
       fn = function(action)
         local ctx = action.ctx
         local lines = ctx.edit:get_lines()

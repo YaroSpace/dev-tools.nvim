@@ -59,7 +59,7 @@ return {
       end,
     },
     {
-      title = "Toggle file/spec",
+      title = "Toggle code/spec",
       filter = ".*",
       fn = function(action)
         local ctx = action.ctx

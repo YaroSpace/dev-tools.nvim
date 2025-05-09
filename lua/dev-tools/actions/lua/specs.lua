@@ -37,6 +37,7 @@ return {
         open_terminal(cmd, ctx.root)
         vim.api.nvim_set_current_win(ctx.win)
       end,
+      desc = "Watch all specs",
     },
     {
       title = "Watch wip",
@@ -49,6 +50,7 @@ return {
         open_terminal(cmd, ctx.root)
         vim.api.nvim_set_current_win(ctx.win)
       end,
+      desc = "Watch #wip specs",
     },
   },
 }

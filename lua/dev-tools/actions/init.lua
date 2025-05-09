@@ -14,6 +14,7 @@ local Utils = require("dev-tools.utils")
 ---@field filetype string[]|nil - filetype to limit the action to
 ---@field keymap string|nil - acton keymap (local to picker)
 ---@field fn fun(action: ActionCtx) - function to execute the action
+---@field desc string|nil - description of the action
 
 ---@class ActionCtx: Action
 ---@field ctx Ctx - context of the action
@@ -59,6 +60,7 @@ local validate_action = function(action)
     vim.validate("filetype", action.filetype, "table", true)
     vim.validate("keymap", action.keymap, "string", true)
     vim.validate("fn", action.fn, "function")
+    vim.validate("desc", action.desc, "string", true)
   end)
 
   if not status then return Logger.error("Invalid action: " .. error, 2) end
@@ -82,6 +84,7 @@ local function make_action(module, action)
   action.filetype = action.filetype or module.filetype
 
   action.filter = not (action.filter or action.filetype) and ".*" or action.filter
+  action.desc = action.desc or ""
 
   return action
 end
