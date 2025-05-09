@@ -32,9 +32,9 @@ M.get_node = function(ctx, types, node, predicate)
   types = type(types) == "string" and { types } or types
 
   if vim.tbl_contains(types, node:type()) and predicate(node) then return node, { node:range() } end
-  if node:type() == "chunk" then return end
+  if node:type() == "chunk" or not node:parent() then return end
 
-  return M.get_node(_, types, node:parent(), predicate)
+  return M.get_node(ctx, types, node:parent(), predicate)
 end
 
 -- Get previous node with same parent
