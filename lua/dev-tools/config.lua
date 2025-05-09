@@ -1,9 +1,5 @@
----@class Config
----@field actions Action[] - list of custom actions
----@field filetypes {include: string[], exclude: string[]} - filetypes to include/exclude
-
----@type Config
 local M = {
+  ---@type Action[]
   actions = {},
 
   filetypes = { -- filetypes for which to attach the LSP
@@ -12,20 +8,28 @@ local M = {
   },
 
   builtin_actions = {
-    include = {}, -- filetype/category/title of actions to include
+    include = {}, -- filetype/category/title of actions to include or {} to include all
     exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
   },
 
   builtin_opts = { -- default options for actions
     specs = {
-      tree_cmd = nil,
-      test_cmd = nil,
-      test_tag = nil,
-      terminal_cmd = nil,
+      tree_cmd = nil, -- command to run the file tree
+      test_cmd = nil, -- command to run tests
+      test_tag = nil, -- command to add tags to the test command
+      terminal_cmd = nil, -- function to run the terminal
     },
 
     debug = {
-      logger = nil,
+      logger = nil, -- function to log debug info
+    },
+  },
+
+  action_keymaps = { -- global keymaps for actions
+    {
+      category = nil, -- category of the action
+      title = nil, -- title of the action
+      keymap = nil, -- keymap, e.g. { "<C-b>", mode = { "n", "i" } }
     },
   },
 

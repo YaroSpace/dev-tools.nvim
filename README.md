@@ -32,16 +32,75 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
     },
 
     builtin_actions = {
-      include = {}, -- filetype/category/title of actions to include
+      include = {}, -- filetype/category/title of actions to include or {} to include all
       exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
     },
 
+    action_keymaps = { -- global keymaps for actions
+      {
+        category = nil, -- category of the action
+        title = nil, -- title of the action
+        keymap = nil, -- keymap, e.g. { "<C-b>", mode = { "n", "i" } }
+      },
+    },
+
     override_ui = true, -- override vim.ui.select with dev-tools actions picker
-    debug = false, -- extra debug info on errors
-    cache = true, -- cache actions at startup (disable when developing actions)
   }
 }
 ```
+
+<details><summary>Full Config</summary>
+
+<!-- config:start -->
+```lua
+local M = {
+---@type Action[]
+  actions = {},
+
+  filetypes = { -- filetypes for which to attach the LSP
+    include = {},
+    exclude = {},
+  },
+
+  builtin_actions = {
+    include = {}, -- filetype/category/title of actions to include
+    exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
+  },
+
+  builtin_opts = { -- default options for actions
+    specs = {
+      tree_cmd = nil, -- command to run the file tree
+      test_cmd = nil, -- command to run tests
+      test_tag = nil, -- command to add tags to the test command
+      terminal_cmd = nil, -- function to run the terminal
+    },
+
+    debug = {
+      logger = nil, -- function to log debug info
+    },
+  },
+
+  action_keymaps = { -- global keymaps for actions
+    {
+      category = nil, -- category of the action
+      title = nil, -- title of the action
+      keymap = nil, -- keymap, e.g. { "<C-b>", mode = { "n", "i" } }
+    },
+  },
+
+  override_ui = true, -- override vim.ui.select
+
+  ui = {
+    keymaps = { filter = "<C-b>" },
+  },
+
+  debug = false, -- extra debug info
+  cache = true, -- cache the actions on start
+}
+```
+<!-- config:end -->
+
+</details>
 
 > [!NOTE]
 > Dev-tools picker uses Snacks.nvim picker module, which is included as a dependency.  If you do not wish to use it, you can set `opts.override_ui = false` and remove Snacks from the `specs` section.
@@ -130,7 +189,7 @@ There are several helper functions to make it easier to create actions:
 ---@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[] - get lines in the buffer
 ---@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number) - set lines in the buffer
 ---@field get_range fun(self: Edit, ls?: number, cs?: number, le?: number, ce?: number): string[] - get lines in the range of the buffer
----@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number) - set lines range of the buffer
+---@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number) - set lines in range of the buffer
 ---@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil - traverses up the tree to find the first TS node matching specified type/s
 ---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil - get previous node with same parent
 ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil - get the text of the node
@@ -145,7 +204,7 @@ This project is originally thought out as community driven.
 The goal is to provide a simple and intuitive interface for creating and managing code actions, as well as a collection of useful code actions that can be used out of the box.
 Your contributions are highly desired and appreciated!
 
-All actions are stored in `/lua/dev-tools/actions/`.  Actions specific to a language can be put under the relevant subdirectory.
+All actions are stored in `dev-tools.nvim/lua/dev-tools/actions/`.  Actions specific to a language can be put under the relevant subdirectory.
 
 ```lua
 ---@class Actions
