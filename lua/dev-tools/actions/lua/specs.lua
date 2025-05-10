@@ -1,14 +1,14 @@
-local Opts = require("dev-tools.config").builtin_opts.specs
+local opts = require("dev-tools.config").get_action_opts("Specs", "Watch specs")
 
-local tree_cmd = Opts.tree_cmd or "git ls-files -cdmo --exclude-standard"
-local test_cmd = Opts.test_cmd or "nvim -l tests/minit.lua tests --shuffle-tests -v"
-local test_tag = test_cmd .. (Opts.test_tag or " --tags=wip")
+local tree_cmd = opts.tree_cmd or "git ls-files -cdmo --exclude-standard"
+local test_cmd = opts.test_cmd or "nvim -l tests/minit.lua tests --shuffle-tests -v"
+local test_tag = test_cmd .. (opts.test_tag or " --tags=wip")
 
 local function watch_cmd(cmd)
   return ("while sleep 0.1; do %s | entr -d -c %s; done"):format(tree_cmd, cmd)
 end
 
-local open_terminal = Opts.terminal_cmd
+local open_terminal = opts.terminal_cmd
   or function(cmd, root)
     Snacks.terminal.toggle(cmd, {
       shell = "/usr/bin/bash",
@@ -24,7 +24,7 @@ local open_terminal = Opts.terminal_cmd
 return {
   category = "Specs",
   filetype = { "lua" },
-  filter = "_spec",
+  condition = "_spec",
   actions = {
     {
       title = "Watch specs",

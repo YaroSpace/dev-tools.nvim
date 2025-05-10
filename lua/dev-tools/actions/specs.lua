@@ -21,7 +21,7 @@ end
 ---@type Actions
 return {
   category = "Specs",
-  filter = "_spec",
+  condition = "_spec",
   actions = {
     {
       title = "Toggle pending",
@@ -60,7 +60,7 @@ return {
     },
     {
       title = "Toggle code/spec",
-      filter = ".*",
+      condition = ".*",
       fn = function(action)
         local ctx = action.ctx
         local name = vim.fn.fnamemodify(ctx.bufname, ":t")

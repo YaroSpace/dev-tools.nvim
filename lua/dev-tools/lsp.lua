@@ -3,8 +3,10 @@ local Config = require("dev-tools.config")
 local Edit = require("dev-tools.edit")
 local Logger = require("dev-tools.logger")
 local Pickers = require("dev-tools.pickers")
+local Utils = require("dev-tools.utils")
 
 local M = {
+  client = nil,
   actions = {},
   commands = {},
 }
@@ -15,6 +17,7 @@ local M = {
 ---@field row number - current line number
 ---@field col number - current column number
 ---@field line string - current line
+---@field word string - word under cursor
 ---@field ts_node TSNode|nil - current TS node
 ---@field ts_type string|nil - type of the current TS node
 ---@field ts_range table<number, number, number, number>|nil - range of the current TS node
@@ -29,14 +32,37 @@ local M = {
 ---@field end {line: number, character: number} - end position of the range
 ---@field rc table<number, number, number, number> - row/col format
 
+---@alias Params { textDocument: { uri: lsp.DocumentUri }, range: Range }
+
+---@return Params
+local function make_params()
+  local mode = vim.api.nvim_get_mode().mode
+  local offset = M.client.offset_encoding
+  local params
+
+  if mode == "v" or mode == "V" then
+    local range = Utils.range_from_selection(0, mode)
+    params = vim.lsp.util.make_given_range_params(range.start, range["end"], 0, offset)
+  else
+    params = vim.lsp.util.make_range_params(0, offset)
+  end
+
+  ---@cast params Range
+  return params
+end
+
+---@param params Params|nil
 ---@return Ctx
 local function get_ctx(params)
-  if not (params and params.textDocument) then return {} end
+  params = params or make_params()
 
   local buf = vim.uri_to_bufnr(params.textDocument.uri)
+
   local cursor = vim.api.nvim_win_get_cursor(vim.fn.bufwinid(buf))
   local row = params.range and params.range.start.line or cursor[1]
   local col = params.range and params.range.start.character or cursor[2]
+
+  local line = vim.api.nvim_buf_get_lines(buf, row, row + 1, false)[1]
   local node = vim.treesitter.get_node()
 
   local file = vim.uri_to_fname(params.textDocument.uri)
@@ -56,7 +82,8 @@ local function get_ctx(params)
     win = vim.fn.win_findbuf(buf)[1],
     row = row,
     col = col,
-    line = vim.api.nvim_buf_get_lines(buf, row, row + 1, false)[1],
+    line = line,
+    word = line and vim.fn.expand("<cword>") or nil,
     ts_type = node and node:type() or nil,
     ts_range = node and { node:range() },
     bufname = file,
@@ -97,12 +124,7 @@ local function code_actions(ctx)
     .iter(M.actions)
     :filter(function(action)
       action.ctx = ctx
-      return (action.filetype == nil or vim.tbl_contains(action.filetype, ctx.filetype))
-        and (
-          not action.filter
-          or (type(action.filter) == "function" and action.filter(ctx))
-          or (type(action.filter) == "string") and ctx.bufname:match(action.filter)
-        )
+      return action:_is_condition() and not action._hide
     end)
     :totable()
 end
@@ -128,7 +150,7 @@ local function new_server()
 
     function srv.request(method, params, handler)
       local status, error = xpcall(function()
-        local ctx = get_ctx(params)
+        local ctx = params and params.textDocument and get_ctx(params)
         _ = handlers[method] and handler(nil, handlers[method](ctx))
       end, debug.traceback)
 
@@ -182,6 +204,8 @@ function M.start_lsp(buf)
     on_exit = function(_code, _signal) end,
     commands = M.commands,
   }, dispatchers)
+
+  M.client = vim.lsp.get_client_by_id(client_id)
 
   return client_id
 end

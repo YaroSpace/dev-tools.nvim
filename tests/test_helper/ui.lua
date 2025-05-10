@@ -70,7 +70,7 @@ h.get_maps = function(buf, mode, replace_leader)
   local list = buf and vim.api.nvim_buf_get_keymap(buf, mode) or vim.api.nvim_get_keymap(mode)
 
   vim.tbl_map(function(map)
-    map.lhs = replace_leader and map.lhs:gsub(vim.g.mapleader, "<leader>") or map.lhs
+    map.lhs = replace_leader and map.lhs:gsub(vim.g.mapleader or ",", "<leader>") or map.lhs
     maps[map.lhs] = map.desc
   end, list)
 
@@ -143,6 +143,9 @@ h.create_buf = function(lines, bufname, scratch)
   vim.api.nvim_win_set_cursor(0, { 1, 1 })
 
   if bufname then vim.api.nvim_buf_set_name(bufnr, bufname) end
+
+  local ft = vim.fn.fnamemodify(bufname, ":e")
+  vim.api.nvim_set_option_value("filetype", ft, { buf = bufnr })
 
   return bufnr
 end

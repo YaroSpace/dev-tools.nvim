@@ -1,12 +1,12 @@
-local Opts = require("dev-tools.config").builtin_opts.debug
-DevTools = Opts.logger or require("dev-tools.log")
+local opts = require("dev-tools.config").get_action_opts("Debugging", "Log vars under cursor")
+DevTools = opts.logger or require("dev-tools.log")
 
 local function insert_log(action, method)
   local ctx = action.ctx
   local var = ctx.edit:get_range()[1]
-  var = var ~= "" and var or vim.fn.expand("<cword>")
+  var = var ~= "" and var or ctx.word
 
-  vim.fn.append(ctx.row, ('%s("%s: ", %s)'):format(method, var:gsub('"', ""), var))
+  vim.fn.append(ctx.row + 1, ('%s("%s: ", %s)'):format(method, var:gsub('"', ""), var))
   ctx.edit:indent()
   ctx.edit:set_cursor(ctx.row + 1)
 end

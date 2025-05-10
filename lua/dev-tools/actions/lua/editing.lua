@@ -8,8 +8,8 @@ return {
   actions = {
     {
       title = "Split/join",
-      filter = function(ctx)
-        return ctx.edit:get_node(sj_nodes) and true
+      condition = function(action)
+        return action.ctx.edit:get_node(sj_nodes) and true
       end,
       fn = function(action)
         local ctx = action.ctx

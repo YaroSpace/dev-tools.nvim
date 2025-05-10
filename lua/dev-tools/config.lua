@@ -12,24 +12,29 @@ local M = {
     exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
   },
 
-  builtin_opts = { -- default options for actions
-    specs = {
-      tree_cmd = nil, -- command to run the file tree
-      test_cmd = nil, -- command to run tests
-      test_tag = nil, -- command to add tags to the test command
-      terminal_cmd = nil, -- function to run the terminal
-    },
-
-    debug = {
-      logger = nil, -- function to log debug info
-    },
-  },
-
-  action_keymaps = { -- global keymaps for actions
+  action_opts = { -- override options for actions
     {
-      category = nil, -- category of the action
-      title = nil, -- title of the action
-      keymap = nil, -- keymap, e.g. { "<C-b>", mode = { "n", "i" } }
+      category = "Debugging",
+      title = "Log vars under cursor",
+      opts = {
+        logger = nil, -- function to log debug info
+        keymap = nil, -- action keymap, e.g.
+        -- {
+        --   global = "<leader>dl"|{ "<leader>dl", mode = { "n", "x" } },
+        --   picker = "<M-l>",
+        --   hide = true,  -- hide the action from the picker
+        -- }
+      },
+    },
+    {
+      category = "Specs",
+      title = "Watch specs",
+      opts = {
+        tree_cmd = nil, -- command to run the file tree
+        test_cmd = nil, -- command to run tests
+        test_tag = nil, -- command to add tags to the test command
+        terminal_cmd = nil, -- function to run the terminal
+      },
     },
   },
 
@@ -51,6 +56,17 @@ local function merge_opts(opts)
       M[k] = v
     end
   end
+end
+
+--- Get action options
+--- @param title string
+--- @param category string
+--- @return table
+M.get_action_opts = function(category, title)
+  local action = vim.iter(M.action_opts):find(function(action)
+    return action.title == title and action.category == category
+  end) or {}
+  return action.opts or {}
 end
 
 M = setmetatable(M, {

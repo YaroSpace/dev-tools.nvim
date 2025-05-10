@@ -17,7 +17,7 @@ local function format_item(count, width_title, width_category)
     local action, ctx = item.item.action, item.item.ctx
     local client = vim.lsp.get_client_by_id(ctx.client_id)
 
-    local keymap = action.keymap or ""
+    local keymap = item.keymap or ""
 
     table.insert(ret, { action._title .. (" "):rep(width_title - #action._title) })
     table.insert(ret, { " " })
@@ -70,7 +70,8 @@ local function select_actions(items, _, on_choice)
     width_title = math.max(width_title, #item.action._title)
     width_category = math.max(width_category, #item.action.category)
 
-    local key = item.action.keymap
+    local opts = Config.get_action_opts(item.action.category, item.action._title)
+    local key = vim.tbl_get(opts, "keymap", "picker")
 
     table.insert(finder_items, {
       formatted = text,

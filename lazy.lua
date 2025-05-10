@@ -8,7 +8,10 @@ return {
   specs = {
     {
       "folke/snacks.nvim",
-      opts = { picker = { enabled = true } },
+      opts = {
+        picker = { enabled = true },
+        terminal = { enabled = true },
+      },
     },
   },
   opts = {},

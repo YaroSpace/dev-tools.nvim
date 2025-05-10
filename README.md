@@ -1,4 +1,4 @@
-# dev-tools.nvim
+# dev-tools.nvim [![Main status](https://img.shields.io/github/actions/workflow/status/yarospace/dev-tools.nvim/tests.yml?label=main&style=for-the-badge)](https://github.com/yarospace/dev-tools.nvim/actions/workflows/tests.yml)
 
 A Neovim plugin that provides an in-process LSP server, a community library and a convenient interface for customization and enhancement of your Neovim with custom code actions.
 
@@ -19,10 +19,13 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
   specs = {
     {
       "folke/snacks.nvim",
-      opts = { picker = { enabled = true } },
+      opts = {
+        picker = { enabled = true },
+        terminal = { enabled = true },
+      },
     },
   },
-  ---@type Config
+
   opts = {
     actions = {},
 
@@ -36,11 +39,18 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
       exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
     },
 
-    action_keymaps = { -- global keymaps for actions
+    action_opts = { -- override options for actions
       {
-        category = nil, -- category of the action
-        title = nil, -- title of the action
-        keymap = nil, -- keymap, e.g. { "<C-b>", mode = { "n", "i" } }
+        category = "Debugging",
+        title = "Log vars under cursor",
+        opts = {
+          keymap = nil, -- action keymap, e.g. 
+          -- { 
+          --   global = "<leader>dl"|{ "<leader>dl", mode = { "n", "x" } }, 
+          --   picker = "<M-l>",
+          --   hide = true,  -- hide the action from the picker
+          -- }
+        },
       },
     },
 
@@ -54,7 +64,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 <!-- config:start -->
 ```lua
 local M = {
----@type Action[]
+  ---@type Action[]
   actions = {},
 
   filetypes = { -- filetypes for which to attach the LSP
@@ -63,28 +73,28 @@ local M = {
   },
 
   builtin_actions = {
-    include = {}, -- filetype/category/title of actions to include
+    include = {}, -- filetype/category/title of actions to include or {} to include all
     exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
   },
 
-  builtin_opts = { -- default options for actions
-    specs = {
-      tree_cmd = nil, -- command to run the file tree
-      test_cmd = nil, -- command to run tests
-      test_tag = nil, -- command to add tags to the test command
-      terminal_cmd = nil, -- function to run the terminal
-    },
-
-    debug = {
-      logger = nil, -- function to log debug info
-    },
-  },
-
-  action_keymaps = { -- global keymaps for actions
+  action_opts = { -- override default options for actions
     {
-      category = nil, -- category of the action
-      title = nil, -- title of the action
-      keymap = nil, -- keymap, e.g. { "<C-b>", mode = { "n", "i" } }
+      category = "Debugging",
+      title = "Log vars under cursor",
+      opts = {
+        logger = nil, -- function to log debug info
+        keymap = nil, -- keymap, e.g. { global = "<C-b>"|{ "<C-b>", mode = { "n", "x" } }, picker = "<C-b>" }
+      },
+    },
+    {
+      category = "Specs",
+      title = "Watch specs",
+      opts = {
+        tree_cmd = nil, -- command to run the file tree
+        test_cmd = nil, -- command to run tests
+        test_tag = nil, -- command to add tags to the test command
+        terminal_cmd = nil, -- function to run the terminal
+      },
     },
   },
 
@@ -109,12 +119,12 @@ local M = {
 
 - Code actions are accessible via the default LSP keymaps, e.g. `gra`, `<leader>ca`, `<leader>la`, etc. 
 - Last action is dot-repeatable.
+- You can add a global or a picker local keymap by specifying it in the `keymap` spec of the action
 
 Dev-tools actions picker is an enhanced version of the default picker, which provides extra info about the actions, live filtering and actions keymaps.
 
 ![Code Actions UI](assets/code_actions.png)
 
-- Specifying `keymap` in the action spec will add a keymap to the action in the picker.
 - `<C-b>` will cycle through categories filter
 
 ![Code Actions Filter](assets/code_actions_filtered.png)
@@ -128,9 +138,8 @@ or registered via `require('dev-tools').register_action({})`
 ---@class Action
 ---@field title string - title of the action
 ---@field category string|nil - category of the action
----@field filter string|nil|fun(ctx: Ctx): boolean - function or pattern to match against buffer name
+---@field condition string|nil|fun(action: ActionCtx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
----@field keymap string|nil - acton keymap (local to picker)
 ---@field fn fun(action: ActionCtx) - function to execute the action
 
 ---@class ActionCtx: Action
@@ -142,6 +151,7 @@ or registered via `require('dev-tools').register_action({})`
 ---@field row number - current line number
 ---@field col number - current column number
 ---@field line string - current line
+---@field word string - word under cursor
 ---@field ts_node TSNode|nil - current TS node
 ---@field ts_type string|nil - type of the current TS node
 ---@field ts_range table<number, number, number, number>|nil - range of the current TS node
@@ -215,9 +225,8 @@ All actions are stored in `dev-tools.nvim/lua/dev-tools/actions/`.  Actions spec
 ---@class Action
 ---@field title string - title of the action
 ---@field category string|nil - category of the action
----@field filter string|nil|fun(ctx: Ctx): boolean - function or pattern to match against buffer name
+---@field condition string|nil|fun(action: ActionCtx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
----@field keymap string|nil - acton keymap (local to picker)
 ---@field fn fun(action: ActionCtx) - function to execute the action
 
 ---@type Actions
@@ -227,16 +236,15 @@ return {
   actions = {
     {
       title = "Extract variable",
-      filter = "_spec",
+      condition = "_spec",
       fn = function(action)
         ---
       end,
     },
     {
       title = "Extract function",
-      filter = function(ctx) return ctx.root:match("project") end,
-      keymap = "<C-e>",
-      fn = function(ctx)
+      condition = function(action) return action.ctx.root:match("project") end,
+      fn = function(action)
         --
       end,
     },

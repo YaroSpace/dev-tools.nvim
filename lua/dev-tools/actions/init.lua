@@ -10,11 +10,16 @@ local Utils = require("dev-tools.utils")
 ---@class Action
 ---@field title string - title of the action
 ---@field category string|nil - category of the action
----@field filter string|nil|fun(ctx: Ctx): boolean - function or pattern to match against buffer name
+---@field condition string|nil|fun(ctx: ActionCtx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
----@field keymap string|nil - acton keymap (local to picker)
 ---@field fn fun(action: ActionCtx) - function to execute the action
 ---@field desc string|nil - description of the action
+---
+---@private
+---@field command? string - LSP command to execute the action
+---@field _title? string - unformatted title of the action
+---@field _is_condition? fun(acttion: ActionCtx): boolean - whether action ondition evaluates to true
+---@filed _hide? boolean - whether the action should be hidden from the UI
 
 ---@class ActionCtx: Action
 ---@field ctx Ctx - context of the action
@@ -25,7 +30,9 @@ M.last_action = nil
 
 local function pcall_wrap(title, fn)
   return function(action)
-    local status, error = xpcall(fn, debug.traceback, action)
+    local status, error = xpcall(function(action)
+      _ = action:_is_condition() and fn(action)
+    end, debug.traceback, action)
     if not status then return Logger.error("Error executing " .. title .. ":\n" .. error, 2) end
 
     M.set_last_action(title, fn, action)
@@ -35,20 +42,14 @@ end
 M.set_last_action = function(title, fn, action)
   vim.o.operatorfunc = "v:lua.require'dev-tools.actions'.last_action"
 
+  ---@diagnostic disable-next-line: duplicate-set-field
   M.last_action = function() end
   vim.cmd.normal("g@l")
 
+  ---@diagnostic disable-next-line: duplicate-set-field
   M.last_action = function()
-    local ctx = require("dev-tools.lsp").get_ctx(vim.lsp.util.make_range_params(0, "utf-8"))
-    action.ctx = ctx
-
-    if
-      not action.filter
-      or (type(action.filter) == "function" and action.filter(ctx))
-      or (type(action.filter) == "string") and ctx.bufname:match(action.filter)
-    then
-      pcall_wrap(title, fn)(action)
-    end
+    action.ctx = require("dev-tools.lsp").get_ctx()
+    pcall_wrap(title, fn)(action)
   end
 end
 
@@ -56,9 +57,8 @@ local validate_action = function(action)
   local status, error = pcall(function()
     vim.validate("title", action.title, { "string" })
     vim.validate("category", action.category, { "string" }, true)
-    vim.validate("filter", action.filter, { "function", "string" }, true)
+    vim.validate("condition", action.condition, { "function", "string" }, true)
     vim.validate("filetype", action.filetype, "table", true)
-    vim.validate("keymap", action.keymap, "string", true)
     vim.validate("fn", action.fn, "function")
     vim.validate("desc", action.desc, "string", true)
   end)
@@ -69,8 +69,6 @@ local validate_action = function(action)
 end
 
 local function make_action(module, action)
-  if not validate_action(action) then return end
-
   action = vim.deepcopy(action)
 
   action.category = action.category or module.category
@@ -80,13 +78,39 @@ local function make_action(module, action)
 
   action.fn = pcall_wrap(action.title, action.fn)
 
-  action.filter = action.filter or module.filter
   action.filetype = action.filetype or module.filetype
+  action.condition = not (action.condition or action.filetype) and ".*" or action.condition
 
-  action.filter = not (action.filter or action.filetype) and ".*" or action.filter
+  action._is_condition = function(action)
+    return (action.filetype == nil or vim.tbl_contains(action.filetype, action.ctx.filetype))
+      and (
+        action.condition == nil
+        or (type(action.condition) == "function" and action:condition())
+        or (type(action.condition) == "string") and action.ctx.bufname:match(action.condition)
+      )
+  end
+
   action.desc = action.desc or ""
 
   return action
+end
+
+local function set_global_keymap(module, action)
+  local opts = Config.get_action_opts(action.category or module.category, action.title)
+  local keymap = vim.tbl_get(opts, "keymap", "global")
+
+  if not keymap then return end
+
+  local map = type(keymap) == "table" and keymap[1] or keymap
+  local mode = type(keymap) == "table" and keymap.mode or "n"
+
+  action._hide = opts.keymap.hide
+
+  vim.keymap.set(mode, map, function()
+    action = make_action(module, action)
+    action.ctx = require("dev-tools.lsp").get_ctx()
+    action:fn()
+  end, { desc = "Dev-tools: " .. action.title })
 end
 
 M.built_in = function()
@@ -110,6 +134,10 @@ M.built_in = function()
     if not module or not type(module.actions) == "table" then return acc end
 
     vim.iter(module.actions):each(function(action)
+      if not validate_action(action) then return end
+
+      set_global_keymap(module, action)
+
       local tags = vim.list_extend({ action.category or module.category, action.title }, (action.filetype or module.filetype or {}))
 
       if vim.tbl_contains(builtin.exclude or {}, function(v)

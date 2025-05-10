@@ -6,7 +6,7 @@ local h = require("test_helper")
 local lsp = require("dev-tools.lsp")
 
 describe("LSP server", function()
-  local result, expected
+  local buf, result, expected
 
   before_each(function()
     dev_tools.setup {
@@ -22,6 +22,23 @@ describe("LSP server", function()
         exclude = { "Specs", "Split/join" },
       },
 
+      action_opts = {
+        {
+          category = "Debugging",
+          title = "Log vars under cursor",
+          opts = {
+            logger = nil,
+            keymap = { global = { "<leader>dl", mode = { "n", "i" } } },
+          },
+        },
+        {
+          category = "Specs",
+          title = "Toggle code/spec",
+          opts = {
+            keymap = { global = "<leader>fs", picker = "<M-l>" },
+          },
+        },
+      },
       debug = true,
     }
   end)
@@ -64,28 +81,36 @@ describe("LSP server", function()
       assert.is_same(config.actions[3].title, "Test Action 3")
       assert.is_same(config.actions[4].title, "Test Action 4")
     end)
+
+    it("sets global keymaps", function()
+      vim.g.mapleader = ","
+      buf = h.create_buf({}, "test.lua")
+
+      local keymaps = h.get_maps()
+      assert.has_properties(keymaps, {
+        ["<leader>dl"] = "Dev-tools: Log vars under cursor",
+        ["<leader>fs"] = "Dev-tools: Toggle code/spec",
+      })
+    end)
   end)
 
   describe("LSP", function()
     it("starts for included filetypes", function()
-      result = h.create_buf({}, "test.lua")
-      vim.api.nvim_set_option_value("filetype", "lua", { buf = result })
+      buf = h.create_buf({}, "test.lua")
 
-      local client = vim.lsp.get_clients({ bufnr = result, name = "dev-tools" })[1]
+      local client = vim.lsp.get_clients({ bufnr = buf, name = "dev-tools" })[1]
       assert.is_not_nil(client)
     end)
 
     it("does not start for excluded filetypes", function()
-      result = h.create_buf({}, "test.js")
-      vim.api.nvim_set_option_value("filetype", "javascript", { buf = result })
+      buf = h.create_buf({}, "test.js")
 
-      local client = vim.lsp.get_clients({ bufnr = result, name = "dev-tools" })[1]
+      local client = vim.lsp.get_clients({ bufnr = buf, name = "dev-tools" })[1]
       assert.is_nil(client)
     end)
 
     it("collects actions on start", function()
-      result = h.create_buf({}, "test.lua")
-      vim.api.nvim_set_option_value("filetype", "lua", { buf = result })
+      buf = h.create_buf({}, "test.lua")
 
       result = vim
         .iter(lsp.actions)
@@ -100,28 +125,27 @@ describe("LSP server", function()
 
     it("filters actions on call", function()
       dev_tools.register_action {
-        { title = "Test Action 2", filter = "test", fn = function() end, filetype = { "rs" } },
-        { title = "Test Action 3", filter = "other", fn = function() end, filetype = { "rs" } },
+        { title = "Test Action 2", condition = "test", fn = function() end, filetype = { "rs" } },
+        { title = "Test Action 3", condition = "other", fn = function() end, filetype = { "rs" } },
         {
           title = "Test Action 4",
-          filter = function(ctx)
-            return ctx.bufname:match("test")
+          condition = function(action)
+            return action.ctx.bufname:match("test")
           end,
           fn = function() end,
           filetype = { "rs" },
         },
         {
           title = "Test Action 5",
-          filter = function(ctx)
-            return ctx.bufname:match("other")
+          condition = function(action)
+            return action.ctx.bufname:match("other")
           end,
           fn = function() end,
           filetype = { "rs" },
         },
       }
 
-      local buf = h.create_buf({}, "test.lua")
-      vim.api.nvim_set_option_value("filetype", "rs", { buf = buf })
+      buf = h.create_buf({}, "test.rs")
 
       local ctx = lsp.get_ctx { textDocument = { uri = vim.uri_from_bufnr(buf) } }
       local actions = lsp.code_actions(ctx)
@@ -140,4 +164,5 @@ end)
 
 --- custom picker
 --- show action info
---- set local keymaps
+--- set picker keymaps
+--- hide action
