@@ -42,8 +42,12 @@ return {
         if fn_name then
           fn_name = ctx.edit:get_node_text(fn_name)
         else
-          fn_name = ctx.edit:get_previous_node(node, true):field("field")[1]
-          fn_name = ctx.edit:get_node_text(fn_name)
+          fn_name = ctx.edit:get_previous_node(node, true)
+
+          fn_name = fn_name and fn_name:field("name")
+          if not fn_name then return end
+
+          fn_name = ctx.edit:get_node_text(fn_name[1])
         end
 
         local fn_text = vim.split(ctx.edit:get_node_text(node), "\n")

@@ -39,11 +39,11 @@ return {
           or line:gsub(spec_name .. [[%((['"])]], "pending(%1" .. spec_name .. "::")
 
         ctx.edit:set_lines({ line }, lnum, lnum + 1)
+        ctx.edit:write()
       end,
     },
     {
       name = "Toggle wip",
-      keymap = "<M-l>",
       fn = function(action)
         local ctx = action.ctx
 
@@ -56,6 +56,7 @@ return {
         line = line:match("#wip") and line:gsub("#wip ", "") or line:gsub(spec_name .. [[%(['"].-]], "%1#wip ")
 
         ctx.edit:set_lines({ line }, lnum, lnum + 1)
+        ctx.edit:write()
       end,
     },
     {

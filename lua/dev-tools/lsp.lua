@@ -177,11 +177,14 @@ local function new_server()
 end
 
 M.start = function(buf, ft)
+  local type = vim.api.nvim_get_option_value("buftype", { buf = buf })
+  if vim.tbl_contains({ "nofile", "prompt", "file", "quikfix", "terminal" }, type) then return end
+
   if vim.tbl_contains(Config.filetypes.exclude or {}, ft) then return end
-  if not vim.tbl_contains(Config.filetypes.include or {}, ft) then return end
+  if #(Config.filetypes.include or {}) > 0 and not vim.tbl_contains(Config.filetypes.include, ft) then return end
 
   M.start_lsp(buf)
-  _ = Config.override_ui and Pickers.stub()
+  _ = Config.ui.override and Pickers.stub()
 end
 
 function M.start_lsp(buf)

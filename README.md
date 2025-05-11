@@ -6,12 +6,24 @@ A Neovim plugin that provides an in-process LSP server, a community library and 
 
 - 🚀 In-process LSP server for code actions
 - 🧩 Simple, intuitive interface and helpers for managing and creating code actions
+- 🔍 Enhanced code actions picker with live filtering, grouping, keymaps and extra info
 - 📚 Community-driven library of useful code actions
 
 ## Installation and setup
 
-Using [lazy.nvim](https://github.com/folke/lazy.nvim):
+With [lazy.nvim](https://github.com/folke/lazy.nvim) Dev-tools work out of the box and do not require any additional setup.  
 
+You may want to tweak a few options, notably global keymaps and choose which actions to include/exclude, to keep the picker clean and fast.
+
+```lua
+{ 'yarospace/dev-tools.nvim' }
+```
+
+For other package managers, you may need to include dependencies and call `require('dev-tools').setup()` in your config.
+
+<details><summary>Minimal Config</summary>
+
+<!-- config:start -->
 ```lua
 {
   'yarospace/dev-tools.nvim',
@@ -26,17 +38,16 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
     },
     {
       "ThePrimeagen/refactoring.nvim", -- refactoring library
-      dependencies = {
-        "nvim-lua/plenary.nvim",
-      },
+      dependencies = { "nvim-lua/plenary.nvim" },
     },
   },
 
   opts = {
+    ---@type Action[]|fun():Action[]
     actions = {},
 
     filetypes = { -- filetypes for which to attach the LSP
-      include = {},
+      include = {}, -- {} to include all
       exclude = {},
     },
 
@@ -51,19 +62,25 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
         name = "Log vars under cursor",
         opts = {
           keymap = nil, -- action keymap, e.g. 
-          -- { 
-          --   global = "<leader>dl"|{ "<leader>dl", mode = { "n", "x" } }, 
-          --   picker = "<M-l>",
-          --   hide = true,  -- hide the action from the picker
-          -- }
+              -- { 
+              --   global = "<leader>dl" | { "<leader>dl", mode = { "n", "x" } }, 
+              --   picker = "<M-l>",
+              --   hide = true,  -- hide the action from the picker
+              -- }
         },
       },
     },
 
-    override_ui = true, -- override vim.ui.select with dev-tools actions picker
+    ui = {
+      override = true, -- override vim.ui.select
+      group_actions = true, -- group actions by category or LSP group
+    },
   }
 }
 ```
+<!-- config:end -->
+
+</details>
 
 <details><summary>Full Config</summary>
 
@@ -74,7 +91,7 @@ local M = {
   actions = {},
 
   filetypes = { -- filetypes for which to attach the LSP
-    include = {},
+    include = {}, -- {} to include all
     exclude = {},
   },
 
@@ -89,7 +106,13 @@ local M = {
       name = "Log vars under cursor",
       opts = {
         logger = nil, -- function to log debug info
-        keymap = nil, -- keymap, e.g. { global = "<C-b>"|{ "<C-b>", mode = { "n", "x" } }, picker = "<C-b>" }
+        keymap = nil, -- action keymap, e.g. 
+            -- { 
+            --   global = "<leader>dl" | { "<leader>dl", mode = { "n", "x" } }, 
+            --   picker = "<M-l>",
+            --   hide = true,  -- hide the action from the picker
+            -- }
+        },
       },
     },
     {
@@ -104,10 +127,10 @@ local M = {
     },
   },
 
-  override_ui = true, -- override vim.ui.select
-
   ui = {
-    keymaps = { filter = "<C-b>" },
+    override = true, -- override vim.ui.select
+    group_actions = false, -- group actions by category or LSP group
+    keymaps = { filter = "<C-b>", open_group = "<C-l>", close_group = "<C-h>" },
   },
 
   debug = false, -- extra debug info
@@ -119,13 +142,13 @@ local M = {
 </details>
 
 > [!NOTE]
-> Dev-tools picker uses Snacks.nvim picker module, which is included as a dependency.  If you do not wish to use it, you can set `opts.override_ui = false` and remove Snacks from the `specs` section.
+> Dev-tools picker uses Snacks.nvim picker module, which is included as a dependency.  If you do not wish to use it, you can set `opts.ui.override = false` and remove Snacks from the `specs` section.
 
 ## Usage
 
 - Code actions are accessible via the default LSP keymaps, e.g. `gra`, `<leader>ca`, `<leader>la`, etc. 
 - Last action is dot-repeatable.
-- You can add a global or a picker local keymap by specifying it in the `keymap` spec of the action
+- You can add a global or a picker local keymap by specifying it in the `keymap` table of the `action_opts`.
 
 Dev-tools actions picker is an enhanced version of the default picker, which provides extra info about the actions, live filtering and actions keymaps.
 
@@ -134,6 +157,11 @@ Dev-tools actions picker is an enhanced version of the default picker, which pro
 - `<C-b>` will cycle through categories filter
 
 ![Code Actions Filter](assets/code_actions_filtered.png)
+
+- If `opts.ui.group_actions` is set to `true`, the actions will be grouped by category.  
+Use `<C-l>` to open the group and `<C-h>` to close.
+
+![Code Actions Groups](assets/code_actions_groups.png)
 
 ## Adding code actions
 
@@ -211,6 +239,7 @@ There are several helper functions to make it easier to create actions:
 ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil - get the text of the node
 ---@field indent fun(self: Edit, l_start?: number, l_end?: number) - indent range in the buffer
 ---@field set_cursor fun(self: Edit, row?: number, col?: number) - set the cursor in the buffer
+---@field write fun() - write the buffer
 ```
 
 ## Contributing
@@ -220,7 +249,8 @@ This project is originally thought out as community driven.
 The goal is to provide a simple and intuitive interface for creating and managing code actions, as well as a collection of useful code actions that can be used out of the box.
 Your contributions are highly desired and appreciated!
 
-All actions are stored in `dev-tools.nvim/lua/dev-tools/actions/`.  Actions specific to a language can be put under the relevant subdirectory.
+All actions are stored in `dev-tools.nvim/lua/dev-tools/actions/`.  
+Actions specific to a language can be put under the relevant subdirectory.
 
 ```lua
 ---@class Actions
@@ -289,6 +319,16 @@ return {
 - [x] Log with trace
 - [x] Log on condition
 - [x] Log in spec
+- [x] Clear logs
+
+### Go, Javascript, Lua, Python, Typescript, C/C++, Java, PHP, Ruby, C#
+
+#### Refactoring [ThePrimeagen/refactoring.nvim](https://github.com/ThePrimeagen/refactoring.nvim)
+
+- [x] Extract function
+- [x] Inline function
+- [x] Extract variable
+- [x] Inline variable
 
 ## License
 

@@ -8,8 +8,8 @@
 ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil - get the text of the node
 ---@field indent fun(self: Edit, l_start?: number, l_end?: number) - indent range in the buffer
 ---@field set_cursor fun(self: Edit, row?: number, col?: number) - set the cursor in the buffer
+---@field write fun() - write the buffer
 
----@type Edit
 local M = {}
 
 local ts_utils = require("nvim-treesitter.ts_utils")
@@ -110,4 +110,10 @@ M.set_cursor = function(ctx, row, col)
   vim.api.nvim_win_set_cursor(ctx.win, { row or ctx.range.rc[1] or ctx.row, col or ctx.range.rc[2] or ctx.col })
 end
 
+--- Write the buffer
+M.write = function()
+  vim.cmd.write()
+end
+
+---@type Edit
 return M

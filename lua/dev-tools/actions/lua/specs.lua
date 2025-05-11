@@ -36,7 +36,7 @@ return {
       fn = function(action)
         local ctx = action.ctx
 
-        vim.cmd("normal :w")
+        ctx.edit:write()
         local cmd = "cd " .. ctx.root .. " && " .. watch_cmd(test_cmd)
 
         open_terminal(cmd, ctx.root)
@@ -49,7 +49,7 @@ return {
       fn = function(action)
         local ctx = action.ctx
 
-        vim.cmd("normal :w")
+        ctx.edit:write()
         local cmd = "cd " .. ctx.root .. " && " .. watch_cmd(test_tag)
 
         open_terminal(cmd, ctx.root)
