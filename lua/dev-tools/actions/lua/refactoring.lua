@@ -27,7 +27,7 @@ return {
   filetype = { "lua" },
   actions = {
     {
-      title = "Convert fn <-> method",
+      name = "Convert fn <-> method",
       condition = function(action)
         local nodes = { "function_declaration", "function_definition" }
         return action.ctx.edit:get_node(nodes) and true
@@ -61,13 +61,13 @@ return {
       end,
     },
     {
-      title = "Extract variable",
+      name = "Extract variable",
       fn = function(action)
         replace_region(action, "Variable name:", "local %s = %s")
       end,
     },
     {
-      title = "Extract function",
+      name = "Extract function",
       fn = function(action)
         replace_region(action, "Function name:", "local function %s()\n%s\nend")
       end,

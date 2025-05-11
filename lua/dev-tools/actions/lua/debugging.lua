@@ -17,27 +17,27 @@ return {
   filetype = { "lua" },
   actions = {
     {
-      title = "Log vars under cursor",
+      name = "Log vars under cursor",
       fn = function(action)
         insert_log(action, "DevTools.log")
       end,
       desc = "Log var/selection",
     },
     {
-      title = "Log trace vars under cursor",
+      name = "Log trace vars under cursor",
       fn = function(action)
         insert_log(action, "DevTools.trace")
       end,
       desc = "Log with trace",
     },
     {
-      title = "Log on condition",
+      name = "Log on condition",
       fn = function(action)
         insert_log(action, "DevTools.iff")
       end,
     },
     {
-      title = "Log in spec",
+      name = "Log in spec",
       fn = function(action)
         insert_log(action, "DevTools.spec")
       end,

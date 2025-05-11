@@ -1,5 +1,5 @@
 local M = {
-  ---@type Action[]
+  ---@type Action[]|fun():Action[]
   actions = {},
 
   filetypes = { -- filetypes for which to attach the LSP
@@ -8,14 +8,14 @@ local M = {
   },
 
   builtin_actions = {
-    include = {}, -- filetype/category/title of actions to include or {} to include all
-    exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
+    include = {}, -- filetype/category/name of actions to include or {} to include all
+    exclude = {}, -- filetype/category/name of actions to exclude or true to exclude all
   },
 
   action_opts = { -- override options for actions
     {
       category = "Debugging",
-      title = "Log vars under cursor",
+      name = "Log vars under cursor",
       opts = {
         logger = nil, -- function to log debug info
         keymap = nil, -- action keymap, e.g.
@@ -28,7 +28,7 @@ local M = {
     },
     {
       category = "Specs",
-      title = "Watch specs",
+      name = "Watch specs",
       opts = {
         tree_cmd = nil, -- command to run the file tree
         test_cmd = nil, -- command to run tests
@@ -59,12 +59,12 @@ local function merge_opts(opts)
 end
 
 --- Get action options
---- @param title string
+--- @param name string
 --- @param category string
 --- @return table
-M.get_action_opts = function(category, title)
+M.get_action_opts = function(category, name)
   local action = vim.iter(M.action_opts):find(function(action)
-    return action.title == title and action.category == category
+    return action.name == name and action.category == category
   end) or {}
   return action.opts or {}
 end

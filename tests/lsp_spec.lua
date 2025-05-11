@@ -10,7 +10,7 @@ describe("LSP server", function()
 
   before_each(function()
     dev_tools.setup {
-      actions = { { title = "Test Action", filetype = { "rs" }, fn = function() end } },
+      actions = { { name = "Test Action", filetype = { "rs" }, fn = function() end } },
 
       filetypes = {
         include = { "lua", "python" },
@@ -25,7 +25,7 @@ describe("LSP server", function()
       action_opts = {
         {
           category = "Debugging",
-          title = "Log vars under cursor",
+          name = "Log vars under cursor",
           opts = {
             logger = nil,
             keymap = { global = { "<leader>dl", mode = { "n", "i" } } },
@@ -33,7 +33,7 @@ describe("LSP server", function()
         },
         {
           category = "Specs",
-          title = "Toggle code/spec",
+          name = "Toggle code/spec",
           opts = {
             keymap = { global = "<leader>fs", picker = "<M-l>" },
           },
@@ -49,7 +49,7 @@ describe("LSP server", function()
 
   describe("config", function()
     it("merges user config", function()
-      assert.is_same(config.actions[1].title, "Test Action")
+      assert.is_same(config.actions[1].name, "Test Action")
       assert.has_properties(config, {
         filetypes = {
           include = { "lua", "python" },
@@ -68,18 +68,18 @@ describe("LSP server", function()
   describe("init", function()
     it("registers actions", function()
       dev_tools.register_action {
-        title = "Test Action 2",
+        name = "Test Action 2",
         fn = function() end,
       }
       dev_tools.register_action {
-        { title = "Test Action 3", fn = function() end },
+        { name = "Test Action 3", fn = function() end },
 
-        { title = "Test Action 4", fn = function() end },
+        { name = "Test Action 4", fn = function() end },
       }
-      assert.is_same(config.actions[1].title, "Test Action")
-      assert.is_same(config.actions[2].title, "Test Action 2")
-      assert.is_same(config.actions[3].title, "Test Action 3")
-      assert.is_same(config.actions[4].title, "Test Action 4")
+      assert.is_same(config.actions[1].name, "Test Action")
+      assert.is_same(config.actions[2].name, "Test Action 2")
+      assert.is_same(config.actions[3].name, "Test Action 3")
+      assert.is_same(config.actions[4].name, "Test Action 4")
     end)
 
     it("sets global keymaps", function()
@@ -115,7 +115,7 @@ describe("LSP server", function()
       result = vim
         .iter(lsp.actions)
         :map(function(action)
-          return action._title
+          return action.name
         end)
         :totable()
 
@@ -125,10 +125,10 @@ describe("LSP server", function()
 
     it("filters actions on call", function()
       dev_tools.register_action {
-        { title = "Test Action 2", condition = "test", fn = function() end, filetype = { "rs" } },
-        { title = "Test Action 3", condition = "other", fn = function() end, filetype = { "rs" } },
+        { name = "Test Action 2", condition = "test", fn = function() end, filetype = { "rs" } },
+        { name = "Test Action 3", condition = "other", fn = function() end, filetype = { "rs" } },
         {
-          title = "Test Action 4",
+          name = "Test Action 4",
           condition = function(action)
             return action.ctx.bufname:match("test")
           end,
@@ -136,7 +136,7 @@ describe("LSP server", function()
           filetype = { "rs" },
         },
         {
-          title = "Test Action 5",
+          name = "Test Action 5",
           condition = function(action)
             return action.ctx.bufname:match("other")
           end,
@@ -153,7 +153,7 @@ describe("LSP server", function()
       result = vim
         .iter(actions)
         :map(function(action)
-          return action._title
+          return action.name
         end)
         :totable()
 

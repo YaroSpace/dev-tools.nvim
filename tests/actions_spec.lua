@@ -5,9 +5,9 @@ local dev_tools = require("dev-tools")
 local h = require("test_helper")
 local lsp = require("dev-tools.lsp")
 
-local function call_action(category, title)
+local function call_action(category, name)
   local action = vim.iter(lsp.actions):find(function(action)
-    return action.category == category and action._title == title
+    return action.category == category and action.name == name
   end)
 
   if not action then return vim.print("Action not found") end
@@ -26,7 +26,7 @@ describe("LSP server", function()
       action_opts = {
         {
           category = "Debugging",
-          title = "Log vars under cursor",
+          name = "Log vars under cursor",
           opts = { logger = LOG },
         },
       },

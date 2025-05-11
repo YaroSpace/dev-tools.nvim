@@ -27,7 +27,7 @@ return {
   condition = "_spec",
   actions = {
     {
-      title = "Watch specs",
+      name = "Watch specs",
       fn = function(action)
         local ctx = action.ctx
 
@@ -40,7 +40,7 @@ return {
       desc = "Watch all specs",
     },
     {
-      title = "Watch wip",
+      name = "Watch wip",
       fn = function(action)
         local ctx = action.ctx
 

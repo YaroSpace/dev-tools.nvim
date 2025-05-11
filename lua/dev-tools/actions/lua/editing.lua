@@ -7,7 +7,7 @@ return {
   filetype = { "lua" },
   actions = {
     {
-      title = "Split/join",
+      name = "Split/join",
       condition = function(action)
         return action.ctx.edit:get_node(sj_nodes) and true
       end,
@@ -38,7 +38,7 @@ return {
       desc = "Table/condition/function",
     },
     {
-      title = "Convert JSON->Lua table",
+      name = "Convert JSON->Lua table",
       fn = function(action)
         local ctx = action.ctx
         local lines = ctx.edit:get_lines()

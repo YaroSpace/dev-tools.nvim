@@ -4,7 +4,7 @@ local Config = require("dev-tools.config")
 local M = {}
 
 ---@return snacks.picker.format
-local function format_item(count, width_title, width_category)
+local function format_item(count, width_name, width_category)
   return function(item)
     local ret = {} ---@type snacks.picker.Highlight[]
 
@@ -19,7 +19,7 @@ local function format_item(count, width_title, width_category)
 
     local keymap = item.keymap or ""
 
-    table.insert(ret, { action._title .. (" "):rep(width_title - #action._title) })
+    table.insert(ret, { action.name .. (" "):rep(width_name - #action.name) })
     table.insert(ret, { " " })
 
     table.insert(ret, { keymap .. (" "):rep(5 - #keymap), "SnacksPickerSpecial" })
@@ -40,7 +40,7 @@ local function format_item(count, width_title, width_category)
 end
 
 local function select_actions(items, _, on_choice)
-  local width_title, width_category = 0, 0
+  local width_name, width_category = 0, 0
   local finder_items, actions, keys = {}, {}, {}
   local categories, category_idx = {}, 0
   local completed = false
@@ -61,16 +61,15 @@ local function select_actions(items, _, on_choice)
   end
 
   for idx, item in ipairs(items) do
-    local text = item.action.title
+    local text = item.action.name
 
-    item.action._title = item.action._title or item.action.title
     item.action.category = item.action.category or ""
     _ = not vim.tbl_contains(categories, item.action.category) and table.insert(categories, item.action.category)
 
-    width_title = math.max(width_title, #item.action._title)
+    width_name = math.max(width_name, #text)
     width_category = math.max(width_category, #item.action.category)
 
-    local opts = Config.get_action_opts(item.action.category, item.action._title)
+    local opts = Config.get_action_opts(item.action.category, item.action.name)
     local key = vim.tbl_get(opts, "keymap", "picker")
 
     table.insert(finder_items, {
@@ -83,7 +82,7 @@ local function select_actions(items, _, on_choice)
     })
 
     if key then
-      keys[key] = { key, mode = { "n", "i" }, desc = item.action._title }
+      keys[key] = { key, mode = { "n", "i" }, desc = item.action.name }
       actions[key] = actions.confirm
     end
   end
@@ -103,10 +102,10 @@ local function select_actions(items, _, on_choice)
 
   actions.picker = snacks_picker.pick {
     source = "select",
-    title = "Code actions",
+    name = "Code actions",
 
     items = finder_items,
-    format = format_item(#finder_items, width_title, width_category),
+    format = format_item(#finder_items, width_name, width_category),
     sort = { fields = { "category", "formatter", "idx" } },
 
     layout = { layout = { height = math.floor(math.min(vim.o.lines * 0.8 - 10, #finder_items + 2) + 0.5) } },

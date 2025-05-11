@@ -35,14 +35,14 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
     },
 
     builtin_actions = {
-      include = {}, -- filetype/category/title of actions to include or {} to include all
-      exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
+      include = {}, -- filetype/category/name of actions to include or {} to include all
+      exclude = {}, -- filetype/category/name of actions to exclude or true to exclude all
     },
 
     action_opts = { -- override options for actions
       {
         category = "Debugging",
-        title = "Log vars under cursor",
+        name = "Log vars under cursor",
         opts = {
           keymap = nil, -- action keymap, e.g. 
           -- { 
@@ -64,7 +64,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 <!-- config:start -->
 ```lua
 local M = {
-  ---@type Action[]
+  ---@type Action[]|fun():Action[]
   actions = {},
 
   filetypes = { -- filetypes for which to attach the LSP
@@ -73,14 +73,14 @@ local M = {
   },
 
   builtin_actions = {
-    include = {}, -- filetype/category/title of actions to include or {} to include all
-    exclude = {}, -- filetype/category/title of actions to exclude or true to exclude all
+    include = {}, -- filetype/category/name of actions to include or {} to include all
+    exclude = {}, -- filetype/category/name of actions to exclude or true to exclude all
   },
 
   action_opts = { -- override default options for actions
     {
       category = "Debugging",
-      title = "Log vars under cursor",
+      name = "Log vars under cursor",
       opts = {
         logger = nil, -- function to log debug info
         keymap = nil, -- keymap, e.g. { global = "<C-b>"|{ "<C-b>", mode = { "n", "x" } }, picker = "<C-b>" }
@@ -88,7 +88,7 @@ local M = {
     },
     {
       category = "Specs",
-      title = "Watch specs",
+      name = "Watch specs",
       opts = {
         tree_cmd = nil, -- command to run the file tree
         test_cmd = nil, -- command to run tests
@@ -136,7 +136,7 @@ or registered via `require('dev-tools').register_action({})`
 
 ```lua
 ---@class Action
----@field title string - title of the action
+---@field name string - name of the action
 ---@field category string|nil - category of the action
 ---@field condition string|nil|fun(action: ActionCtx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
@@ -167,10 +167,10 @@ or registered via `require('dev-tools').register_action({})`
 ---@field rc table<number, number, number, number> - row/col format
 
 opts = {
-  ---@type Action[]
+  ---@type Action[]|fun():Action[]
   actions = {
     {
-      title = "Extract variable",
+      name = "Extract variable",
       filetype = { "lua" },
       fn = function(action)
         local ctx = action.ctx
@@ -220,10 +220,10 @@ All actions are stored in `dev-tools.nvim/lua/dev-tools/actions/`.  Actions spec
 ---@class Actions
 ---@field category string - category of actions
 ---@field filetype string[]|nil - filetype to limit the actions category to
----@field actions Action[] - list of actions
+---@field actions Action[]|fun(): Action[] - list oe actions
 
 ---@class Action
----@field title string - title of the action
+---@field name string - name of the action
 ---@field category string|nil - category of the action
 ---@field condition string|nil|fun(action: ActionCtx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
@@ -235,14 +235,14 @@ return {
   filetype = { "lua" },
   actions = {
     {
-      title = "Extract variable",
+      name = "Extract variable",
       condition = "_spec",
       fn = function(action)
         ---
       end,
     },
     {
-      title = "Extract function",
+      name = "Extract function",
       condition = function(action) return action.ctx.root:match("project") end,
       fn = function(action)
         --

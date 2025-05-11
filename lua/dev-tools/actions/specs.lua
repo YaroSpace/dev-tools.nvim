@@ -24,7 +24,7 @@ return {
   condition = "_spec",
   actions = {
     {
-      title = "Toggle pending",
+      name = "Toggle pending",
       fn = function(action)
         local ctx = action.ctx
 
@@ -42,7 +42,7 @@ return {
       end,
     },
     {
-      title = "Toggle wip",
+      name = "Toggle wip",
       keymap = "<M-l>",
       fn = function(action)
         local ctx = action.ctx
@@ -59,7 +59,7 @@ return {
       end,
     },
     {
-      title = "Toggle code/spec",
+      name = "Toggle code/spec",
       condition = ".*",
       fn = function(action)
         local ctx = action.ctx
