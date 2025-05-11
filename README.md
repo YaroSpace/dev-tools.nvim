@@ -15,13 +15,19 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 {
   'yarospace/dev-tools.nvim',
-  dependencies = { "nvim-treesitter/nvim-treesitter" },
+  dependencies = { "nvim-treesitter/nvim-treesitter" }, -- code manipulation in buffer
   specs = {
     {
       "folke/snacks.nvim",
       opts = {
-        picker = { enabled = true },
-        terminal = { enabled = true },
+        picker = { enabled = true }, -- actions picker
+        terminal = { enabled = true }, -- terminal for running spec actions
+      },
+    },
+    {
+      "ThePrimeagen/refactoring.nvim", -- refactoring library
+      dependencies = {
+        "nvim-lua/plenary.nvim",
       },
     },
   },

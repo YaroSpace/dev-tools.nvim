@@ -61,20 +61,20 @@ local function select_actions(items, _, on_choice)
   end
 
   for idx, item in ipairs(items) do
-    local text = item.action.name
-
+    item.action.name = item.action.name or ""
     item.action.category = item.action.category or ""
+
     _ = not vim.tbl_contains(categories, item.action.category) and table.insert(categories, item.action.category)
 
-    width_name = math.max(width_name, #text)
+    width_name = math.max(width_name, #item.action.name)
     width_category = math.max(width_category, #item.action.category)
 
     local opts = Config.get_action_opts(item.action.category, item.action.name)
     local key = vim.tbl_get(opts, "keymap", "picker")
 
     table.insert(finder_items, {
-      formatted = text,
-      text = idx .. " " .. text,
+      formatted = item.action.name,
+      text = idx .. " " .. item.action.name,
       category = item.action.category,
       item = item,
       keymap = key,

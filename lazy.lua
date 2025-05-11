@@ -13,6 +13,12 @@ return {
         terminal = { enabled = true },
       },
     },
+    {
+      "ThePrimeagen/refactoring.nvim",
+      dependencies = {
+        "nvim-lua/plenary.nvim",
+      },
+    },
   },
   opts = {},
 }

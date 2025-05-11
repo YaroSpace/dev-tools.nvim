@@ -1,3 +1,5 @@
+local has_snacks, _ = pcall(require, "snacks")
+local Logger = require("dev-tools.logger")
 local opts = require("dev-tools.config").get_action_opts("Specs", "Watch specs")
 
 local tree_cmd = opts.tree_cmd or "git ls-files -cdmo --exclude-standard"
@@ -9,7 +11,7 @@ local function watch_cmd(cmd)
 end
 
 local open_terminal = opts.terminal_cmd
-  or function(cmd, root)
+  or has_snacks and function(cmd, root)
     Snacks.terminal.toggle(cmd, {
       shell = "/usr/bin/bash",
       cwd = root or vim.uv.cwd(),
@@ -18,6 +20,9 @@ local open_terminal = opts.terminal_cmd
       auto_insert = false,
       win = { position = "right", width = vim.o.columns * 0.4, wo = { winbar = "" } },
     })
+  end
+  or function()
+    return Logger.error("Failed to open terminal: include Snacks.terminal in the dependencies or set `terminal_cmd` in the action opts")
   end
 
 ---@type Actions

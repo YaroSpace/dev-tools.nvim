@@ -43,5 +43,25 @@ return {
       end,
       desc = "Log showing running spec",
     },
+    {
+      name = "Logs clear",
+      fn = function(action)
+        local ctx = action.ctx
+        local lines = vim.api.nvim_buf_get_lines(ctx.buf, 0, -1, true)
+
+        for i, line in ipairs(lines) do
+          line = line:gsub("%s*DevTools%..+%(.-%)%s*", "")
+
+          if lines[i] ~= line and line == "" then
+            table.remove(lines, i)
+          else
+            lines[i] = line
+          end
+        end
+
+        ctx.edit:set_lines(lines, 0, -1)
+      end,
+      desc = "Clear all logs",
+    },
   },
 }
