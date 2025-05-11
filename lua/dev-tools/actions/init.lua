@@ -95,15 +95,13 @@ local function make_action(module, action)
 end
 
 local function set_global_keymap(module, action)
-  local opts = Config.get_action_opts(action.category or module.category, action.name)
-  local keymap = vim.tbl_get(opts, "keymap", "global")
-
+  local keymap = Config.get_action_opts(action.category or module.category, action.name, "keymap", "global")
   if not keymap then return end
 
-  local map = type(keymap) == "table" and keymap[1] or keymap
-  local mode = type(keymap) == "table" and keymap.mode or "n"
+  local map = keymap[1] or keymap
+  local mode = keymap.mode or "n"
 
-  action._hide = opts.keymap.hide
+  action._hide = keymap.hide
 
   vim.keymap.set(mode, map, function()
     action = make_action(module, action)

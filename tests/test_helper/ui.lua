@@ -134,7 +134,6 @@ end
 ---@return integer bufnr
 h.create_buf = function(lines, bufname, scratch)
   lines = lines or {}
-  scratch = scratch ~= false
 
   local bufnr = vim.api.nvim_create_buf(true, scratch)
 
@@ -153,7 +152,7 @@ end
 h.delete_all_bufs = function()
   local buffers = vim.api.nvim_list_bufs()
   for _, buf in ipairs(buffers) do
-    if vim.api.nvim_buf_is_loaded(buf) then vim.api.nvim_buf_delete(buf, {}) end
+    if vim.api.nvim_buf_is_loaded(buf) then vim.api.nvim_buf_delete(buf, { force = true }) end
   end
 end
 

@@ -27,7 +27,7 @@ describe("LSP server", function()
           category = "Debugging",
           name = "Log vars under cursor",
           opts = {
-            logger = nil,
+            logger = LOG,
             keymap = { global = { "<leader>dl", mode = { "n", "i" } } },
           },
         },

@@ -3,7 +3,7 @@ local M = {
   actions = {},
 
   filetypes = { -- filetypes for which to attach the LSP
-    include = {},
+    include = {}, -- {} to include all
     exclude = {},
   },
 
@@ -38,10 +38,10 @@ local M = {
     },
   },
 
-  override_ui = true, -- override vim.ui.select
-
   ui = {
-    keymaps = { filter = "<C-b>" },
+    override = true, -- override vim.ui.select
+    group_actions = true, -- group actions by category or LSP group
+    keymaps = { filter = "<C-b>", open_group = "<C-l>", close_group = "<C-h>" },
   },
 
   debug = false, -- extra debug info
@@ -61,12 +61,16 @@ end
 --- Get action options
 --- @param name string
 --- @param category string
+--- @param ... string -- keys to get from the opts table
 --- @return table
-M.get_action_opts = function(category, name)
+M.get_action_opts = function(category, name, ...)
+  local args = { ... }
   local action = vim.iter(M.action_opts):find(function(action)
     return action.name == name and action.category == category
   end) or {}
-  return action.opts or {}
+
+  local opts = action.opts or {}
+  return #args == 0 and opts or vim.tbl_get(opts, unpack(args))
 end
 
 M = setmetatable(M, {
