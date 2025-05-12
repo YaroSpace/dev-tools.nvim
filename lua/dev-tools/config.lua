@@ -8,13 +8,13 @@ local M = {
   },
 
   builtin_actions = {
-    include = {}, -- filetype/category/name of actions to include or {} to include all
-    exclude = {}, -- filetype/category/name of actions to exclude or true to exclude all
+    include = {}, -- filetype/group/name of actions to include or {} to include all
+    exclude = {}, -- filetype/group/name of actions to exclude or true to exclude all
   },
 
   action_opts = { -- override options for actions
     {
-      category = "Debugging",
+      group = "Debugging",
       name = "Log vars under cursor",
       opts = {
         logger = nil, -- function to log debug info
@@ -27,7 +27,7 @@ local M = {
       },
     },
     {
-      category = "Specs",
+      group = "Specs",
       name = "Watch specs",
       opts = {
         tree_cmd = nil, -- command to run the file tree
@@ -40,7 +40,7 @@ local M = {
 
   ui = {
     override = true, -- override vim.ui.select
-    group_actions = true, -- group actions by category or LSP group
+    group_actions = true, -- group actions by group name
     keymaps = { filter = "<C-b>", open_group = "<C-l>", close_group = "<C-h>" },
   },
 
@@ -60,13 +60,13 @@ end
 
 --- Get action options
 --- @param name string
---- @param category string
+--- @param group string
 --- @param ... string -- keys to get from the opts table
 --- @return table
-M.get_action_opts = function(category, name, ...)
+M.get_action_opts = function(group, name, ...)
   local args = { ... }
   local action = vim.iter(M.action_opts):find(function(action)
-    return action.name == name and action.category == category
+    return action.name == name and action.group == group
   end) or {}
 
   local opts = action.opts or {}

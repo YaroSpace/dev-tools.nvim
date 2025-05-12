@@ -20,7 +20,7 @@ end
 
 ---@type Actions
 return {
-  category = "Specs",
+  group = "Specs",
   condition = "_spec",
   actions = {
     {

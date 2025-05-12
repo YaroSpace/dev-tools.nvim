@@ -27,7 +27,7 @@ local open_terminal = opts.terminal_cmd
 
 ---@type Actions
 return {
-  category = "Specs",
+  group = "Specs",
   filetype = { "lua" },
   condition = "_spec",
   actions = {

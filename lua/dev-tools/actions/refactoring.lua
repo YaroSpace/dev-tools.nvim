@@ -2,7 +2,7 @@
 
 ---@type Actions
 return {
-  category = "Refact (Prime)",
+  group = "Refact (Prime)",
   filetypes = { "go", "javascript", "lua", "python", "typescript" },
   actions = function()
     local status, refactors = pcall(require("refactoring").get_refactors)

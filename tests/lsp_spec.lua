@@ -24,7 +24,7 @@ describe("LSP server", function()
 
       action_opts = {
         {
-          category = "Debugging",
+          group = "Debugging",
           name = "Log vars under cursor",
           opts = {
             logger = LOG,
@@ -32,7 +32,7 @@ describe("LSP server", function()
           },
         },
         {
-          category = "Specs",
+          group = "Specs",
           name = "Toggle code/spec",
           opts = {
             keymap = { global = "<leader>fs", picker = "<M-l>" },

@@ -13,7 +13,7 @@ end
 
 ---@type Actions
 return {
-  category = "Debugging",
+  group = "Debugging",
   filetype = { "lua" },
   actions = {
     {

@@ -3,13 +3,13 @@ local Logger = require("dev-tools.logger")
 local Utils = require("dev-tools.utils")
 
 ---@class Actions
----@field category string|nil - category of actions
----@field filetype string[]|nil - filetype to limit the actions category to
+---@field group string|nil - group of actions
+---@field filetype string[]|nil - filetype to limit the actions group to
 ---@field actions Action[]|fun(): Action[] - list of actions
 
 ---@class Action
 ---@field name string - name of the action
----@field category string|nil - category of the action
+---@field group string|nil - group of the action
 ---@field condition string|nil|fun(ctx: ActionCtx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
 ---@field fn fun(action: ActionCtx) - function to execute the action
@@ -56,7 +56,7 @@ end
 local validate_action = function(action)
   local status, error = pcall(function()
     vim.validate("name", action.name, { "string" })
-    vim.validate("category", action.category, { "string" }, true)
+    vim.validate("group", action.group, { "string" }, true)
     vim.validate("condition", action.condition, { "function", "string" }, true)
     vim.validate("filetype", action.filetype, "table", true)
     vim.validate("fn", action.fn, "function")
@@ -71,9 +71,9 @@ end
 local function make_action(module, action)
   action = vim.deepcopy(action)
 
-  action.category = action.category or module.category
+  action.group = action.group or module.group
   action.command = action.name:gsub("%W", "_"):lower()
-  action.title = action.name .. " (" .. action.category:lower() .. ")"
+  action.title = action.name .. " (" .. action.group:lower() .. ")"
 
   action.fn = pcall_wrap(action.name, action.fn)
 
@@ -95,7 +95,7 @@ local function make_action(module, action)
 end
 
 local function set_global_keymap(module, action)
-  local keymap = Config.get_action_opts(action.category or module.category, action.name, "keymap", "global")
+  local keymap = Config.get_action_opts(action.group or module.group, action.name, "keymap", "global")
   if not keymap then return end
 
   local map = keymap[1] or keymap
@@ -136,7 +136,7 @@ M.built_in = function()
 
       set_global_keymap(module, action)
 
-      local tags = vim.list_extend({ action.category or module.category, action.name }, (action.filetype or module.filetype or {}))
+      local tags = vim.list_extend({ action.group or module.group, action.name }, (action.filetype or module.filetype or {}))
 
       if vim.tbl_contains(builtin.exclude or {}, function(v)
         return vim.tbl_contains(tags, v)
@@ -159,7 +159,7 @@ end
 M.custom = function()
   local actions = type(Config.actions) == "function" and Config.actions() or Config.actions
   return vim.iter(actions):fold({}, function(acc, action)
-    return vim.list_extend(acc, { make_action({ category = "Custom" }, action) })
+    return vim.list_extend(acc, { make_action({ group = "Custom" }, action) })
   end)
 end
 

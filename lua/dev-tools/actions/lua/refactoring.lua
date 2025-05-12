@@ -23,7 +23,7 @@ end
 
 ---@type Actions
 return {
-  category = "Refactoring",
+  group = "Refactoring",
   filetype = { "lua" },
   actions = {
     {

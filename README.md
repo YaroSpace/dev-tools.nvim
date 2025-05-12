@@ -1,6 +1,6 @@
 # dev-tools.nvim [![Main status](https://img.shields.io/github/actions/workflow/status/yarospace/dev-tools.nvim/tests.yml?label=main&style=for-the-badge)](https://github.com/yarospace/dev-tools.nvim/actions/workflows/tests.yml)
 
-A Neovim plugin that provides an in-process LSP server, a community library and a convenient interface for customization and enhancement of your Neovim with custom code actions.
+A Neovim plugin that provides in-process LSP server, a community library and a convenient interface for customization and enhancement of your Neovim with custom code actions.
 
 ## Features
 
@@ -11,7 +11,7 @@ A Neovim plugin that provides an in-process LSP server, a community library and 
 
 ## Installation and setup
 
-With [lazy.nvim](https://github.com/folke/lazy.nvim) Dev-tools work out of the box and do not require any additional setup.  
+With [lazy.nvim](https://github.com/folke/lazy.nvim) dev-tools work out of the box and do not require any additional setup.  
 
 You may want to tweak a few options, notably global keymaps and choose which actions to include/exclude, to keep the picker clean and fast.
 
@@ -19,7 +19,7 @@ You may want to tweak a few options, notably global keymaps and choose which act
 { 'yarospace/dev-tools.nvim' }
 ```
 
-For other package managers, you may need to include dependencies and call `require('dev-tools').setup()` in your config.
+For other package managers, you may need to include dependencies and call `require('dev-tools').setup({ ... })` in your config.
 
 <details><summary>Minimal Config</summary>
 
@@ -52,13 +52,13 @@ For other package managers, you may need to include dependencies and call `requi
     },
 
     builtin_actions = {
-      include = {}, -- filetype/category/name of actions to include or {} to include all
-      exclude = {}, -- filetype/category/name of actions to exclude or true to exclude all
+      include = {}, -- filetype/group/name of actions to include or {} to include all
+      exclude = {}, -- filetype/group/name of actions to exclude or true to exclude all
     },
 
     action_opts = { -- override options for actions
       {
-        category = "Debugging",
+        group = "Debugging",
         name = "Log vars under cursor",
         opts = {
           keymap = nil, -- action keymap, e.g. 
@@ -73,7 +73,7 @@ For other package managers, you may need to include dependencies and call `requi
 
     ui = {
       override = true, -- override vim.ui.select
-      group_actions = true, -- group actions by category or LSP group
+      group_actions = true, -- group actions by group name
     },
   }
 }
@@ -91,18 +91,18 @@ local M = {
   actions = {},
 
   filetypes = { -- filetypes for which to attach the LSP
-    include = {}, -- {} to include all
+    include = {}, -- {} to include all, except for special buftypes, e.g. nofile|help|terminal|prompt
     exclude = {},
   },
 
   builtin_actions = {
-    include = {}, -- filetype/category/name of actions to include or {} to include all
-    exclude = {}, -- filetype/category/name of actions to exclude or true to exclude all
+    include = {}, -- filetype/group/name of actions to include or {} to include all
+    exclude = {}, -- filetype/group/name of actions to exclude or "true" to exclude all
   },
 
   action_opts = { -- override default options for actions
     {
-      category = "Debugging",
+      group = "Debugging",
       name = "Log vars under cursor",
       opts = {
         logger = nil, -- function to log debug info
@@ -116,7 +116,7 @@ local M = {
       },
     },
     {
-      category = "Specs",
+      group = "Specs",
       name = "Watch specs",
       opts = {
         tree_cmd = nil, -- command to run the file tree
@@ -129,7 +129,7 @@ local M = {
 
   ui = {
     override = true, -- override vim.ui.select
-    group_actions = false, -- group actions by category or LSP group
+    group_actions = false, -- group actions by group or LSP group
     keymaps = { filter = "<C-b>", open_group = "<C-l>", close_group = "<C-h>" },
   },
 
@@ -158,7 +158,7 @@ Dev-tools actions picker is an enhanced version of the default picker, which pro
 
 ![Code Actions Filter](assets/code_actions_filtered.png)
 
-- If `opts.ui.group_actions` is set to `true`, the actions will be grouped by category.  
+- If `opts.ui.group_actions` is set to `true`, the actions will be grouped by group name.
 Use `<C-l>` to open the group and `<C-h>` to close.
 
 ![Code Actions Groups](assets/code_actions_groups.png)
@@ -171,7 +171,7 @@ or registered via `require('dev-tools').register_action({})`
 ```lua
 ---@class Action
 ---@field name string - name of the action
----@field category string|nil - category of the action
+---@field group string|nil - group of the action
 ---@field condition string|nil|fun(action: ActionCtx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
 ---@field fn fun(action: ActionCtx) - function to execute the action
@@ -242,6 +242,11 @@ There are several helper functions to make it easier to create actions:
 ---@field write fun() - write the buffer
 ```
 
+> [!NOTE]
+> Dev-tools actions API is slightly different from `null-ls/none-ls` API.
+
+I may implement 100% compatibility if there is a demand for it.  Let me know.
+
 ## Contributing
 
 This project is originally thought out as community driven. 
@@ -254,20 +259,20 @@ Actions specific to a language can be put under the relevant subdirectory.
 
 ```lua
 ---@class Actions
----@field category string - category of actions
----@field filetype string[]|nil - filetype to limit the actions category to
+---@field group string - group of actions
+---@field filetype string[]|nil - filetype to limit the actions group to
 ---@field actions Action[]|fun(): Action[] - list oe actions
 
 ---@class Action
 ---@field name string - name of the action
----@field category string|nil - category of the action
+---@field group string|nil - group of the action
 ---@field condition string|nil|fun(action: ActionCtx): boolean - function or pattern to match against buffer name
 ---@field filetype string[]|nil - filetype to limit the action to
 ---@field fn fun(action: ActionCtx) - function to execute the action
 
 ---@type Actions
 return {
-  category = "Refactoring",
+  group = "Refactoring",
   filetype = { "lua" },
   actions = {
     {

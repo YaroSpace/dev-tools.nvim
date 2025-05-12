@@ -3,7 +3,7 @@ local sj_nodes = { "table_constructor", "if_statement", "function_declaration", 
 
 ---@type Actions
 return {
-  category = "Editing",
+  group = "Editing",
   filetype = { "lua" },
   actions = {
     {
