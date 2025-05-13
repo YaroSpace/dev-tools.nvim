@@ -1,0 +1,375 @@
+*dev-tools.nvim.txt*Friendly developer tools - Code Actions LSP server and library
+
+==============================================================================
+Table of Contents                           *dev-tools.nvim-table-of-contents*
+
+1. dev-tools.nvim Main status      |dev-tools.nvim-dev-tools.nvim-main-status|
+  - Features              |dev-tools.nvim-dev-tools.nvim-main-status-features|
+  - Installation and setup|dev-tools.nvim-dev-tools.nvim-main-status-installation-and-setup|
+  - Usage                    |dev-tools.nvim-dev-tools.nvim-main-status-usage|
+  - Adding code actions|dev-tools.nvim-dev-tools.nvim-main-status-adding-code-actions|
+  - Contributing      |dev-tools.nvim-dev-tools.nvim-main-status-contributing|
+  - Available actions|dev-tools.nvim-dev-tools.nvim-main-status-available-actions|
+  - License                |dev-tools.nvim-dev-tools.nvim-main-status-license|
+2. Links                                                |dev-tools.nvim-links|
+
+==============================================================================
+1. dev-tools.nvim Main status      *dev-tools.nvim-dev-tools.nvim-main-status*
+
+A Neovim plugin that provides in-process LSP server, a community library and a
+convenient interface for customization and enhancement of your Neovim with
+custom code actions.
+
+
+FEATURES                  *dev-tools.nvim-dev-tools.nvim-main-status-features*
+
+- 🚀 In-process LSP server for code actions
+- 🧩 Simple, intuitive interface and helpers for managing and creating code actions
+- 🔍 Enhanced code actions picker with live filtering, grouping, keymaps and extra info
+- 📚 Community-driven library of useful code actions
+
+
+INSTALLATION AND SETUP*dev-tools.nvim-dev-tools.nvim-main-status-installation-and-setup*
+
+With lazy.nvim <https://github.com/folke/lazy.nvim> dev-tools work out of the
+box and do not require any additional setup.
+
+You may want to tweak a few options, notably global keymaps and choose which
+actions to include/exclude, to keep the picker clean and fast.
+
+>lua
+    { 'yarospace/dev-tools.nvim' }
+<
+
+For other package managers, you may need to include dependencies and call
+`require('dev-tools').setup({ ... })` in your config.
+
+Minimal Config ~
+
+>lua
+    {
+      'yarospace/dev-tools.nvim',
+      dependencies = { "nvim-treesitter/nvim-treesitter" }, -- code manipulation in buffer
+      specs = {
+        {
+          "folke/snacks.nvim",
+          opts = {
+            picker = { enabled = true }, -- actions picker
+            terminal = { enabled = true }, -- terminal for running spec actions
+          },
+        },
+        {
+          "ThePrimeagen/refactoring.nvim", -- refactoring library
+          dependencies = { "nvim-lua/plenary.nvim" },
+        },
+      },
+    
+      opts = {
+        ---@type Action[]|fun():Action[]
+        actions = {},
+    
+        filetypes = { -- filetypes for which to attach the LSP
+          include = {}, -- {} to include all
+          exclude = {},
+        },
+    
+        builtin_actions = {
+          include = {}, -- filetype/group/name of actions to include or {} to include all
+          exclude = {}, -- filetype/group/name of actions to exclude or true to exclude all
+        },
+    
+        action_opts = { -- override options for actions
+          {
+            group = "Debugging",
+            name = "Log vars under cursor",
+            opts = {
+              keymap = nil, -- action keymap, e.g. 
+                  -- { 
+                  --   global = "<leader>dl" | { "<leader>dl", mode = { "n", "x" } }, 
+                  --   picker = "<M-l>",
+                  --   hide = true,  -- hide the action from the picker
+                  -- }
+            },
+          },
+        },
+    
+        ui = {
+          override = true, -- override vim.ui.select
+          group_actions = true, -- group actions by group name
+        },
+      }
+    }
+<
+
+Full Config ~
+
+>lua
+    local M = {
+      ---@type Action[]|fun():Action[]
+      actions = {},
+    
+      filetypes = { -- filetypes for which to attach the LSP
+        include = {}, -- {} to include all, except for special buftypes, e.g. nofile|help|terminal|prompt
+        exclude = {},
+      },
+    
+      builtin_actions = {
+        include = {}, -- filetype/group/name of actions to include or {} to include all
+        exclude = {}, -- filetype/group/name of actions to exclude or "true" to exclude all
+      },
+    
+      action_opts = { -- override default options for actions
+        {
+          group = "Debugging",
+          name = "Log vars under cursor",
+          opts = {
+            logger = nil, -- function to log debug info
+            keymap = nil, -- action keymap, e.g. 
+                -- { 
+                --   global = "<leader>dl" | { "<leader>dl", mode = { "n", "x" } }, 
+                --   picker = "<M-l>",
+                --   hide = true,  -- hide the action from the picker
+                -- }
+            },
+          },
+        },
+        {
+          group = "Specs",
+          name = "Watch specs",
+          opts = {
+            tree_cmd = nil, -- command to run the file tree
+            test_cmd = nil, -- command to run tests
+            test_tag = nil, -- command to add tags to the test command
+            terminal_cmd = nil, -- function to run the terminal
+          },
+        },
+      },
+    
+      ui = {
+        override = true, -- override vim.ui.select
+        group_actions = false, -- group actions by group or LSP group
+        keymaps = { filter = "<C-b>", open_group = "<C-l>", close_group = "<C-h>" },
+      },
+    
+      debug = false, -- extra debug info
+      cache = true, -- cache the actions on start
+    }
+<
+
+
+  [!NOTE] Dev-tools picker uses Snacks.nvim picker module, which is included as a
+  dependency. If you do not wish to use it, you can set `opts.ui.override =
+  false` and remove Snacks from the `specs` section.
+
+USAGE                        *dev-tools.nvim-dev-tools.nvim-main-status-usage*
+
+- Code actions are accessible via the default LSP keymaps, e.g. `gra`, `<leader>ca`, `<leader>la`, etc.
+- Last action is dot-repeatable.
+- You can add a global or a picker local keymap by specifying it in the `keymap` table of the `action_opts`.
+
+Dev-tools actions picker is an enhanced version of the default picker, which
+provides extra info about the actions, live filtering and actions keymaps.
+
+- `<C-b>` will cycle through categories filter
+
+- If `opts.ui.group_actions` is set to `true`, the actions will be grouped by group name.
+    Use `<C-l>` to open the group and `<C-h>` to close.
+
+
+ADDING CODE ACTIONS*dev-tools.nvim-dev-tools.nvim-main-status-adding-code-actions*
+
+- Custom actions can be added to the `opts.actions` table in your configuration
+    or registered via `require('dev-tools').register_action({})`
+
+>lua
+    ---@class Action
+    ---@field name string - name of the action
+    ---@field group string|nil - group of the action
+    ---@field condition string|nil|fun(action: ActionCtx): boolean - function or pattern to match against buffer name
+    ---@field filetype string[]|nil - filetype to limit the action to
+    ---@field fn fun(action: ActionCtx) - function to execute the action
+    
+    ---@class ActionCtx: Action
+    ---@field ctx Ctx - context of the action
+    
+    ---@class Ctx
+    ---@field buf number - buffer number
+    ---@field win number - window number
+    ---@field row number - current line number
+    ---@field col number - current column number
+    ---@field line string - current line
+    ---@field word string - word under cursor
+    ---@field ts_node TSNode|nil - current TS node
+    ---@field ts_type string|nil - type of the current TS node
+    ---@field ts_range table<number, number, number, number>|nil - range of the current TS node
+    ---@field bufname string - full path to file in buffer
+    ---@field root string - root directory of the file
+    ---@field filetype string - filetype
+    ---@field range Range|nil - range of the current selection
+    ---@field edit Edit - edititng functions
+    
+    ---@class Range
+    ---@field start {line: number, character: number} - start position of the range
+    ---@field end {line: number, character: number} - end position of the range
+    ---@field rc table<number, number, number, number> - row/col format
+    
+    opts = {
+      ---@type Action[]|fun():Action[]
+      actions = {
+        {
+          name = "Extract variable",
+          filetype = { "lua" },
+          fn = function(action)
+            local ctx = action.ctx
+    
+            vim.ui.input({ prompt = "Variable name:", default = "" }, function(var_name)
+              if not var_name then return end
+    
+              local var_body = ("local %s = %s"):format(var_name, ctx.edit:get_range()[1])
+    
+              ctx.edit:set_range { var_name }
+              ctx.edit:set_lines({ var_body }, ctx.range.rc[1], ctx.range.rc[1])
+    
+              ctx.edit:indent(ctx.range.rc[1] - 1, ctx.range.rc[3] + 1)
+              ctx.edit:set_cursor(ctx.range.rc[1] + 2, ctx.range.rc[2] + 1)
+            end)
+          end,
+        },
+      }
+    }
+<
+
+There are several helper functions to make it easier to create actions:
+
+>lua
+    ---@class Edit: Ctx
+    ---@field get_lines fun(self: Edit, l_start?: number, l_end?: number): string[] - get lines in the buffer
+    ---@field set_lines fun(self: Edit, lines: string[], l_start?: number, l_end?: number) - set lines in the buffer
+    ---@field get_range fun(self: Edit, ls?: number, cs?: number, le?: number, ce?: number): string[] - get lines in the range of the buffer
+    ---@field set_range fun(self: Edit, lines: string[], ls?: number, cs?: number, le?: number, ce?: number) - set lines in range of the buffer
+    ---@field get_node fun(self: Edit, types: string|string[], node?: TSNode|nil, predicate?: fun(node: TSNode): boolean| nil): TSNode|nil, table <number, number, number, number>|nil - traverses up the tree to find the first TS node matching specified type/s
+    ---@field get_previous_node fun(self: Edit, node: TSNode, allow_switch_parents?: boolean, allow_previous_parent?: boolean): TSNode|nil - get previous node with same parent
+    ---@field get_node_text fun(self: Edit, node?: TSNode): string|nil - get the text of the node
+    ---@field indent fun(self: Edit, l_start?: number, l_end?: number) - indent range in the buffer
+    ---@field set_cursor fun(self: Edit, row?: number, col?: number) - set the cursor in the buffer
+    ---@field write fun() - write the buffer
+<
+
+
+  [!NOTE] Dev-tools actions API is slightly different from `null-ls/none-ls` API.
+I may implement 100% compatibility if there is a demand for it. Let me know.
+
+
+CONTRIBUTING          *dev-tools.nvim-dev-tools.nvim-main-status-contributing*
+
+This project is originally thought out as community driven.
+
+The goal is to provide a simple and intuitive interface for creating and
+managing code actions, as well as a collection of useful code actions that can
+be used out of the box. Your contributions are highly desired and appreciated!
+
+All actions are stored in `dev-tools.nvim/lua/dev-tools/actions/`. Actions
+specific to a language can be put under the relevant subdirectory.
+
+>lua
+    ---@class Actions
+    ---@field group string - group of actions
+    ---@field filetype string[]|nil - filetype to limit the actions group to
+    ---@field actions Action[]|fun(): Action[] - list oe actions
+    
+    ---@class Action
+    ---@field name string - name of the action
+    ---@field group string|nil - group of the action
+    ---@field condition string|nil|fun(action: ActionCtx): boolean - function or pattern to match against buffer name
+    ---@field filetype string[]|nil - filetype to limit the action to
+    ---@field fn fun(action: ActionCtx) - function to execute the action
+    
+    ---@type Actions
+    return {
+      group = "Refactoring",
+      filetype = { "lua" },
+      actions = {
+        {
+          name = "Extract variable",
+          condition = "_spec",
+          fn = function(action)
+            ---
+          end,
+        },
+        {
+          name = "Extract function",
+          condition = function(action) return action.ctx.root:match("project") end,
+          fn = function(action)
+            --
+          end,
+        },
+      },
+    }
+<
+
+
+AVAILABLE ACTIONS*dev-tools.nvim-dev-tools.nvim-main-status-available-actions*
+
+
+LUA ~
+
+
+REFACTORING
+
+- ☒ Extract variable
+- ☒ Extract function
+
+
+EDITING
+
+- ☒ Split/join function/table/conditional
+- ☒ Convert JSON to Lua table
+
+
+SPECS
+
+- ☒ Run/watch all specs
+- ☒ Run/watch current spec
+
+
+SPECS
+
+- ☒ Switch between code and spec files
+- ☒ Toggle pending
+- ☒ Toggle #wip tag
+
+
+DEBUGGING
+
+- ☒ Log variable under cursor
+- ☒ Log with trace
+- ☒ Log on condition
+- ☒ Log in spec
+- ☒ Clear logs
+
+
+GO, JAVASCRIPT, LUA, PYTHON, TYPESCRIPT, C/C++, JAVA, PHP, RUBY, C ~
+
+
+REFACTORING THEPRIMEAGEN/REFACTORING.NVIM
+
+- ☒ Extract function
+- ☒ Inline function
+- ☒ Extract variable
+- ☒ Inline variable
+
+
+LICENSE                    *dev-tools.nvim-dev-tools.nvim-main-status-license*
+
+MIT
+
+==============================================================================
+2. Links                                                *dev-tools.nvim-links*
+
+1. *Code Actions UI*: assets/code_actions.png
+2. *Code Actions Filter*: assets/code_actions_filtered.png
+3. *Code Actions Groups*: assets/code_actions_groups.png
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:
