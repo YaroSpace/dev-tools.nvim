@@ -1,0 +1,43 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create User Documentation
+        uses: kdheepak/panvimdoc@main
+        with:
+          vimdoc: dev-tools.nvim # Output vimdoc project name (required)
+          # The following are all optional
+          pandoc: "README.md" # Input pandoc file
+          version: "Neovim >= 0.10.0"
+          toc: true # Table of contents
+          description: Friendly developer tools - Code Actions LSP server and library 
+          titledatepattern: "%Y %B %d" # Pattern for the date that used in the title
+          demojify: false # Strip emojis from the vimdoc
+          dedupsubheadings: true # Add heading to subheading anchor links to ensure that subheadings are unique
+          treesitter: true # Use treesitter for highlighting codeblocks
+          ignorerawblocks: true # Ignore raw html blocks in markdown when converting to vimdoc
+          docmapping: false # Use h4 headers as mapping docs
+          docmappingprojectname: true # Use project name in tag when writing mapping docs
+          shiftheadinglevelby: 0 # Shift heading levels by specified number
+          incrementheadinglevelby: 0 # Increment heading levels by specified number
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "docs: Auto-generate vimdocs + vimtags"
+          branch: "autogen/vimdocs"
