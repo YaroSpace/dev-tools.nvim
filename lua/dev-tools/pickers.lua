@@ -159,7 +159,7 @@ local function select_actions(items, _, on_choice)
   end
 
   actions.open_group = function(picker, item)
-    if item and not item.text:find("Group") then return end
+    if item and not item.text:find("Group") then return actions.confirm(picker, item) end
     apply_filter(picker, item and item.item.action.group or "")
   end
 
@@ -181,7 +181,6 @@ local function select_actions(items, _, on_choice)
     layout = {
       layout = {
         height = get_list_height(Config.ui.group_actions and (#M.groups + M.no_group) or #finder_items),
-
         width = M.max_width.item,
       },
     },

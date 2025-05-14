@@ -158,7 +158,7 @@ Dev-tools actions picker is an enhanced version of the default picker, which pro
 
 ![Code Actions Filter](assets/code_actions_filtered.png)
 
-- If `opts.ui.group_actions` is set to `true`, the actions will be grouped by group name.
+- If `opts.ui.group_actions` is set to `true`, the actions will be grouped by group name.  
 Use `<C-l>` to open the group and `<C-h>` to close.
 
 ![Code Actions Groups](assets/code_actions_groups.png)

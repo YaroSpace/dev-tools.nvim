@@ -78,7 +78,7 @@ local function make_action(module, action)
   action.fn = pcall_wrap(action.name, action.fn)
 
   action.filetype = action.filetype or module.filetype
-  action.condition = not (action.condition or action.filetype) and ".*" or action.condition
+  action.condition = action.condition or module.condition or ".*"
 
   action._is_condition = function(action)
     return (action.filetype == nil or vim.tbl_contains(action.filetype, action.ctx.filetype))
