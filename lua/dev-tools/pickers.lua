@@ -1,10 +1,10 @@
 local has_snacks, snacks_picker = pcall(require, "snacks.picker")
 local Config = require("dev-tools.config")
 
-local M = { groups = {} }
+local M = { groups = {}, max_width = { name = 0, group = 0, item = 0 }, no_group = 0 }
 
 ---@return snacks.picker.format
-local function format_item(count, width_name, width_group)
+local function format_item(count)
   return function(item)
     local ret = {} ---@type snacks.picker.Highlight[]
 
@@ -19,13 +19,13 @@ local function format_item(count, width_name, width_group)
 
     local keymap = item.keymap or ""
 
-    table.insert(ret, { action.name .. (" "):rep(width_name - #action.name) })
+    table.insert(ret, { action.name .. (" "):rep(M.max_width.name - #action.name) })
     table.insert(ret, { " " })
 
     table.insert(ret, { keymap .. (" "):rep(5 - #keymap), "SnacksPickerSpecial" })
     table.insert(ret, { " " })
 
-    table.insert(ret, { action.group .. (" "):rep(width_group - #action.group), "Number" })
+    table.insert(ret, { action.group .. (" "):rep(M.max_width.group - #action.group), "Number" })
 
     if client then
       ret[#ret + 1] = { " " }
@@ -44,6 +44,7 @@ local function group_items(item, idx)
 
   if #group == 0 then
     item.text = item.text .. " Group" -- add generic group name "Group", so ungrouped actions get shown in the grouped list
+    M.no_group = M.no_group + 1
     return
   end
 
@@ -65,8 +66,9 @@ end
 
 local function select_actions(items, _, on_choice)
   M.groups = {}
+  M.no_group = 0
 
-  local width_name, width_group, group_idx = 0, 0, 0
+  local group_idx = 0
   local finder_items, actions, keys = {}, {}, {}
   local completed = false
 
@@ -87,12 +89,25 @@ local function select_actions(items, _, on_choice)
     end)
   end
 
+  local function get_list_width(count, picker_item)
+    local item = format_item(count)(picker_item)
+    local line = vim
+      .iter(item)
+      :map(function(col)
+        return col[1]
+      end)
+      :flatten()
+      :totable()
+    return #table.concat(line, "") + 7
+  end
+
+  local function get_list_height(count)
+    return math.floor(math.min(vim.o.lines * 0.8 - 10, count + 2) + 0.5)
+  end
+
   for idx, item in ipairs(items) do
     item.action.name = item.action.name or item.action.title
     item.action.group = item.action.group or ""
-
-    width_name = math.max(width_name, #item.action.name)
-    width_group = math.max(width_group, #item.action.group)
 
     local keymap = Config.get_action_opts(item.action.group, item.action.name, "keymap", "picker")
 
@@ -107,6 +122,12 @@ local function select_actions(items, _, on_choice)
     local group_item = group_items(picker_item, idx)
     _ = Config.ui.group_actions and group_item and table.insert(finder_items, group_item)
 
+    M.max_width = {
+      name = math.max(M.max_width.name, #item.action.name),
+      group = math.max(M.max_width.group, #item.action.group),
+      item = math.max(M.max_width.item, get_list_width(#finder_items, picker_item)),
+    }
+
     table.insert(finder_items, picker_item)
 
     if keymap then
@@ -115,10 +136,20 @@ local function select_actions(items, _, on_choice)
     end
   end
 
+  local function resize_picker(picker)
+    local layout = vim.deepcopy(picker.resolved_layout)
+    layout.layout.height = get_list_height(#picker.list.items)
+    picker:set_layout(layout)
+  end
+
   local function apply_filter(picker, text)
     picker.input.filter.search = text
     picker.input.filter.pattern = text:lower()
-    picker:find()
+    picker:find {
+      on_done = vim.schedule_wrap(function()
+        resize_picker(picker)
+      end),
+    }
   end
 
   actions.filter_group = function(picker)
@@ -128,12 +159,12 @@ local function select_actions(items, _, on_choice)
   end
 
   actions.open_group = function(picker, item)
-    if not item.text:find("Group") then return end
-    apply_filter(picker, item.item.action.group)
+    if item and not item.text:find("Group") then return end
+    apply_filter(picker, item and item.item.action.group or "")
   end
 
-  actions.close_group = function(picker, item)
-    apply_filter(picker, "Group")
+  actions.close_group = function(picker)
+    _ = Config.ui.group_actions and apply_filter(picker, "Group")
   end
 
   keys[Config.ui.keymaps.filter] = { "filter_group", mode = { "n", "i" }, desc = "Filter by group" }
@@ -145,9 +176,15 @@ local function select_actions(items, _, on_choice)
     title = "Code actions",
 
     items = finder_items,
-    format = format_item(#finder_items, width_name, width_group),
+    format = format_item(#finder_items),
 
-    layout = { layout = { height = math.floor(math.min(vim.o.lines * 0.8 - 10, #finder_items + 2) + 0.5) } },
+    layout = {
+      layout = {
+        height = get_list_height(Config.ui.group_actions and (#M.groups + M.no_group) or #finder_items),
+
+        width = M.max_width.item,
+      },
+    },
     win = { input = { keys = keys } },
 
     live = true,
@@ -159,8 +196,8 @@ local function select_actions(items, _, on_choice)
     on_show = function(picker)
       vim.defer_fn(function()
         picker.opts.live = false
-        actions.close_group(picker)
-      end, 1000)
+        _ = Config.ui.group_actions and actions.close_group(picker)
+      end, 300)
     end,
 
     on_close = function()
