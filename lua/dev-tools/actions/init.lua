@@ -72,8 +72,8 @@ local function make_action(module, action)
   action = vim.deepcopy(action)
 
   action.group = action.group or module.group
-  action.command = action.name:gsub("%W", "_"):lower()
   action.title = action.name .. " (" .. action.group:lower() .. ")"
+  action.command = action.title:gsub("%W", "_"):lower()
 
   action.fn = pcall_wrap(action.name, action.fn)
 

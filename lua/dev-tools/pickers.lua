@@ -65,8 +65,8 @@ local function group_items(item, idx)
 end
 
 local function select_actions(items, _, on_choice)
-  M.groups = {}
-  M.no_group = 0
+  local ui = Config.ui
+  M.groups, M.no_group = {}, 0
 
   local group_idx = 0
   local finder_items, actions, keys = {}, {}, {}
@@ -120,7 +120,7 @@ local function select_actions(items, _, on_choice)
     }
 
     local group_item = group_items(picker_item, idx)
-    _ = Config.ui.group_actions and group_item and table.insert(finder_items, group_item)
+    _ = ui.group_actions and group_item and table.insert(finder_items, group_item)
 
     M.max_width = {
       name = math.max(M.max_width.name, #item.action.name),
@@ -164,12 +164,12 @@ local function select_actions(items, _, on_choice)
   end
 
   actions.close_group = function(picker)
-    _ = Config.ui.group_actions and apply_filter(picker, "Group")
+    _ = ui.group_actions and apply_filter(picker, "Group")
   end
 
-  keys[Config.ui.keymaps.filter] = { "filter_group", mode = { "n", "i" }, desc = "Filter by group" }
-  keys[Config.ui.keymaps.open_group] = { "open_group", mode = { "n", "i" }, desc = "Open group" }
-  keys[Config.ui.keymaps.close_group] = { "close_group", mode = { "n", "i" }, desc = "Close group" }
+  keys[ui.keymaps.filter] = { "filter_group", mode = { "n", "i" }, desc = "Filter by group" }
+  keys[ui.keymaps.open_group] = { "open_group", mode = { "n", "i" }, desc = "Open group" }
+  keys[ui.keymaps.close_group] = { "close_group", mode = { "n", "i" }, desc = "Close group" }
 
   actions.picker = snacks_picker.pick {
     source = "select",
@@ -180,14 +180,14 @@ local function select_actions(items, _, on_choice)
 
     layout = {
       layout = {
-        height = get_list_height(Config.ui.group_actions and (#M.groups + M.no_group) or #finder_items),
+        height = get_list_height(ui.group_actions and (#M.groups + M.no_group) or #finder_items),
         width = M.max_width.item,
       },
     },
     win = { input = { keys = keys } },
 
     live = true,
-    pattern = Config.ui.group_actions and "Group" or "",
+    pattern = ui.group_actions and "Group" or "",
     sort = { fields = { "group", "formatter", "idx" } },
 
     actions = actions,
@@ -195,7 +195,7 @@ local function select_actions(items, _, on_choice)
     on_show = function(picker)
       vim.defer_fn(function()
         picker.opts.live = false
-        _ = Config.ui.group_actions and actions.close_group(picker)
+        _ = ui.group_actions and actions.close_group(picker)
       end, 300)
     end,
 
