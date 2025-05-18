@@ -2,7 +2,9 @@ return {
   "yarospace/dev-tools.nvim",
   lazy = true,
   event = "BufEnter",
-  dependencies = { "nvim-treesitter/nvim-treesitter" },
+  dependencies = {
+    "nvim-treesitter/nvim-treesitter",
+  },
   specs = {
     {
       "folke/snacks.nvim",
@@ -13,7 +15,9 @@ return {
     },
     {
       "ThePrimeagen/refactoring.nvim",
-      dependencies = { "nvim-lua/plenary.nvim" },
+      dependencies = {
+        "nvim-lua/plenary.nvim",
+      },
     },
   },
   opts = {},

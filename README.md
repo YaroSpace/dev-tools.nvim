@@ -11,12 +11,37 @@ A Neovim plugin that provides in-process LSP server, a community library and a c
 
 ## Installation and setup
 
-With [lazy.nvim](https://github.com/folke/lazy.nvim) dev-tools work out of the box and do not require any additional setup.  
+With [lazy.nvim](https://github.com/folke/lazy.nvim), you are only required to set the `filetypes.include` option, the rest is optional.
 
 You may want to tweak a few options, notably global keymaps and choose which actions to include/exclude, to keep the picker clean and fast.
 
 ```lua
-{ 'yarospace/dev-tools.nvim' }
+{
+  'yarospace/dev-tools.nvim',
+  dependencies = { 
+    "nvim-treesitter/nvim-treesitter" -- code manipulation in buffer, required
+    {
+      "folke/snacks.nvim", -- optional
+      opts = {
+        picker = { enabled = true }, -- actions picker
+        terminal = { enabled = true }, -- terminal for running spec actions
+      },
+    },
+    {
+      "ThePrimeagen/refactoring.nvim", -- refactoring library, optional
+      dependencies = { "nvim-lua/plenary.nvim" },
+    },
+  },
+
+  opts = {
+    ---@type Action[]|fun():Action[]
+    actions = {},
+
+    filetypes = { -- filetypes for which to attach the LSP
+      include = {}, -- {} to include all
+      exclude = {},
+    },
+  }
 ```
 
 For other package managers, you may need to include dependencies and call `require('dev-tools').setup({ ... })` in your config.
@@ -27,17 +52,17 @@ For other package managers, you may need to include dependencies and call `requi
 ```lua
 {
   'yarospace/dev-tools.nvim',
-  dependencies = { "nvim-treesitter/nvim-treesitter" }, -- code manipulation in buffer
-  specs = {
+  dependencies = { 
+    "nvim-treesitter/nvim-treesitter" -- code manipulation in buffer, required
     {
-      "folke/snacks.nvim",
+      "folke/snacks.nvim", -- optional
       opts = {
         picker = { enabled = true }, -- actions picker
         terminal = { enabled = true }, -- terminal for running spec actions
       },
     },
     {
-      "ThePrimeagen/refactoring.nvim", -- refactoring library
+      "ThePrimeagen/refactoring.nvim", -- refactoring library, optional
       dependencies = { "nvim-lua/plenary.nvim" },
     },
   },
@@ -72,7 +97,7 @@ For other package managers, you may need to include dependencies and call `requi
     },
 
     ui = {
-      override = true, -- override vim.ui.select
+      override = true, -- override vim.ui.select, requires `snacks.nvim` to be included in dependencies or installed separately
       group_actions = true, -- group actions by group name
     },
   }
@@ -128,7 +153,7 @@ local M = {
   },
 
   ui = {
-    override = true, -- override vim.ui.select
+    override = true, -- override vim.ui.select, requires `snacks.nvim` to be included in dependencies or installed separately
     group_actions = false, -- group actions by group or LSP group
     keymaps = { filter = "<C-b>", open_group = "<C-l>", close_group = "<C-h>" },
   },
@@ -142,7 +167,7 @@ local M = {
 </details>
 
 > [!NOTE]
-> Dev-tools picker uses Snacks.nvim picker module, which is included as a dependency.  If you do not wish to use it, you can set `opts.ui.override = false` and remove Snacks from the `specs` section.
+> Dev-tools picker uses Snacks.nvim picker module, which should be included as a dependency or installed separately.
 
 ## Usage
 
@@ -329,6 +354,8 @@ return {
 ### Go, Javascript, Lua, Python, Typescript, C/C++, Java, PHP, Ruby, C#
 
 #### Refactoring [ThePrimeagen/refactoring.nvim](https://github.com/ThePrimeagen/refactoring.nvim)
+
+The module should be included as a dependency or installed separately, and will be automatically detected.
 
 - [x] Extract function
 - [x] Inline function
