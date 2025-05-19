@@ -357,6 +357,8 @@ return {
 
 The module should be included as a dependency or installed separately, and will be automatically detected.
 
+Actions are available only for visually selected code.
+
 - [x] Extract function
 - [x] Inline function
 - [x] Extract variable

@@ -16,7 +16,7 @@ local function call_action(group, name)
   action:fn()
 end
 
-describe("LSP server", function()
+describe("built-in actions", function()
   local buf, result, expected
   local input
 
@@ -43,12 +43,11 @@ describe("LSP server", function()
     vim.ui.input:revert()
   end)
 
-  describe("config", function()
+  describe("Lua", function()
     it("extract variable", function()
       buf = h.create_buf(
         ([[
         local a = print(vim.fn.bufnr())
-        end
       ]]):to_table(),
         "test.lua"
       )
@@ -62,6 +61,28 @@ describe("LSP server", function()
       result = h.get_buf_lines(buf):to_string()
       assert.has_string(result, "local var_name = vim.fn.bufnr()")
       assert.has_string(result, "local a = print(var_name)")
+    end)
+
+    it("extract function", function()
+      buf = h.create_buf(
+        ([[
+        local a = print(vim.fn.bufnr())
+        vim.print("Test")
+      ]]):to_table(),
+        "test.lua"
+      )
+
+      vim.api.nvim_win_set_cursor(0, { 1, 1 })
+      h.send_keys("V")
+
+      input = "fn_name"
+      call_action("Refactoring", "Extract function")
+
+      result = h.get_buf_lines(buf):to_string()
+      assert.has_string(result, "local function fn_name()\n")
+      assert.has_string(result, "local a = print(vim.fn.bufnr())\n")
+      assert.has_string(result, "end\n")
+      assert.has_string(result, 'vim.print("Test")\n')
     end)
   end)
 end)
