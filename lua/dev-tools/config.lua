@@ -1,9 +1,14 @@
+---@class Keymap
+---@field global string|table<{[1]:string, mode: string[]}> -- global keymap
+---@field picker string -- keymap for the action picker
+---@field hide boolean -- hide the action from the picker
+
 local M = {
   ---@type Action[]|fun():Action[]
   actions = {},
 
   filetypes = { -- filetypes for which to attach the LSP
-    include = {}, -- {} to include all
+    include = {}, -- {} to include all, except for special buftypes, e.g. nofile|help|terminal|prompt
     exclude = {},
   },
 
@@ -12,13 +17,13 @@ local M = {
     exclude = {}, -- filetype/group/name of actions to exclude or true to exclude all
   },
 
-  action_opts = { -- override options for actions
+  action_opts = { -- override default options for actions
     {
       group = "Debugging",
       name = "Log vars under cursor",
       opts = {
-        logger = nil, -- function to log debug info
-        keymap = nil, -- action keymap, e.g.
+        logger = nil, ---@type function to log debug info, default dev-tools.log
+        keymap = nil, ---@type Keymap action keymap spec, e.g.
         -- {
         --   global = "<leader>dl"|{ "<leader>dl", mode = { "n", "x" } },
         --   picker = "<M-l>",
@@ -30,17 +35,25 @@ local M = {
       group = "Specs",
       name = "Watch specs",
       opts = {
-        tree_cmd = nil, -- command to run the file tree
-        test_cmd = nil, -- command to run tests
-        test_tag = nil, -- command to add tags to the test command
-        terminal_cmd = nil, -- function to run the terminal
+        tree_cmd = nil, ---@type string command to run the file tree, default "git ls-files -cdmo --exclude-standard"
+        test_cmd = nil, ---@type string command to run tests, default "nvim -l tests/minit.lua tests --shuffle-tests -v"
+        test_tag = nil, ---@type string test tag, default "wip"
+        terminal_cmd = nil, ---@type function to run the terminal, default is Snacks.terminal
+      },
+    },
+    {
+      group = "Todo",
+      name = "Open Todo",
+      opts = {
+        filename = nil, ---@type string name of the todo file, default ".todo.md"
+        template = nil, ---@type string[] -- template for the todo file
       },
     },
   },
 
   ui = {
-    override = true, -- override vim.ui.select
-    group_actions = true, -- group actions by group name
+    override = true, -- override vim.ui.select, requires `snacks.nvim` to be included in dependencies or installed separately
+    group_actions = true, -- group actions by group or LSP group
     keymaps = { filter = "<C-b>", open_group = "<C-l>", close_group = "<C-h>" },
   },
 
