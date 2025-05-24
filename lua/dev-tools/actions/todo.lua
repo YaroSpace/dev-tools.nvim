@@ -20,7 +20,7 @@ local function create_todo_file(path, item)
     if choice == "Yes" then
       vim.cmd("edit " .. path)
 
-      if item then table.insert(template, "[-] " .. item) end
+      if item then template[#template] = "- [ ] " .. item end
       vim.api.nvim_buf_set_lines(0, 0, -1, false, template)
 
       vim.cmd("write")
@@ -51,7 +51,7 @@ return {
           if vim.fn.filereadable(path) == 0 then return create_todo_file(path, input) end
 
           vim.cmd("edit " .. path)
-          vim.api.nvim_buf_set_lines(0, -1, -1, false, { "[-] " .. input })
+          vim.api.nvim_buf_set_lines(0, -1, -1, false, { "- [ ] " .. input })
 
           vim.cmd("write")
           vim.cmd("normal! G")
