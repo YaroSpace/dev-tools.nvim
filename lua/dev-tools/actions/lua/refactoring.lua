@@ -1,3 +1,5 @@
+---@diagnostic disable: cast-local-type
+
 local function replace_region(action, prompt, template)
   local ctx = action.ctx
 
@@ -44,7 +46,7 @@ return {
         else
           fn_name = ctx.edit:get_previous_node(node, true)
 
-          fn_name = fn_name and fn_name:field("name")
+          fn_name = fn_name and fn_name:field("field")
           if not fn_name then return end
 
           fn_name = ctx.edit:get_node_text(fn_name[1])
@@ -62,6 +64,7 @@ return {
 
         local range = { node:range() }
         ctx.edit:set_lines(fn_text, range[1], range[3] + 1)
+        ctx.edit:indent(range[1], range[3] + 1)
       end,
     },
     {

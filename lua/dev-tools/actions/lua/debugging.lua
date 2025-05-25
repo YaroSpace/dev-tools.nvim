@@ -4,9 +4,10 @@ DevTools = opts.logger or require("dev-tools.log")
 local function insert_log(action, method)
   local ctx = action.ctx
   local var = ctx.edit:get_range()[1]
-  var = var ~= "" and var or ctx.word
 
-  vim.fn.append(ctx.row + 1, ('%s("%s: ", %s)'):format(method, var:gsub('"', ""), var))
+  var = var ~= "" and var or ctx.word
+  vim.fn.append(ctx.row + 1, ('%s("%s: ", %s)'):format(method, var:gsub('"', ""), var == "" and '"HERE"' or var))
+
   ctx.edit:indent()
   ctx.edit:set_cursor(ctx.row + 1)
 end
