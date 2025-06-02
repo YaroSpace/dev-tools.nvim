@@ -18,8 +18,8 @@ You may want to tweak a few options, notably global keymaps and perhaps choose w
 ```lua
 {
   'yarospace/dev-tools.nvim',
-  dependencies = { 
-    "nvim-treesitter/nvim-treesitter" -- code manipulation in buffer, required
+  dependencies = {
+    "nvim-treesitter/nvim-treesitter", -- code manipulation in buffer, required
     {
       "folke/snacks.nvim", -- optional
       opts = {
@@ -42,6 +42,7 @@ You may want to tweak a few options, notably global keymaps and perhaps choose w
       exclude = {},
     },
   }
+}
 ```
 
 For other package managers, you may need to include dependencies and call `require('dev-tools').setup({ ... })` in your config.
@@ -53,7 +54,7 @@ For other package managers, you may need to include dependencies and call `requi
 {
   'yarospace/dev-tools.nvim',
   dependencies = { 
-    "nvim-treesitter/nvim-treesitter" -- code manipulation in buffer, required
+    "nvim-treesitter/nvim-treesitter", -- code manipulation in buffer, required
     {
       "folke/snacks.nvim", -- optional
       opts = {
