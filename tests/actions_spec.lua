@@ -1,6 +1,5 @@
 ---@diagnostic disable: missing-fields, undefined-field, param-type-mismatch
 
-local config = require("dev-tools.config")
 local dev_tools = require("dev-tools")
 local h = require("test_helper")
 local lsp = require("dev-tools.lsp")

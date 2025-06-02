@@ -12,8 +12,6 @@
 
 local M = {}
 
-local ts_utils = require("nvim-treesitter.ts_utils")
-
 ---Traverses up the tree to find the first TS node matching specified type/s
 ---@param types string|string[]
 ---@param node? TSNode|nil
@@ -42,8 +40,33 @@ end
 ---@param node TSNode
 ---@param allow_switch_parents? boolean - allow switching parents if first node
 ---@param allow_previous_parent? boolean - allow previous parent if first node and previous parent without children
-M.get_previous_node = function(ctx, node, allow_switch_parents, allow_previous_parent)
-  return ts_utils.get_previous_node(node, allow_switch_parents, allow_previous_parent)
+function M.get_previous_node(ctx, node, allow_switch_parents, allow_previous_parent)
+  local destination_node ---@type TSNode
+
+  local parent = node:parent()
+  if not parent then return end
+
+  local found_pos = 0
+  for i = 0, parent:named_child_count() - 1, 1 do
+    if parent:named_child(i) == node then
+      found_pos = i
+      break
+    end
+  end
+
+  if 0 < found_pos then
+    destination_node = parent:named_child(found_pos - 1)
+  elseif allow_switch_parents then
+    local previous_node = M:get_previous_node(node:parent())
+
+    if previous_node and previous_node:named_child_count() > 0 then
+      destination_node = previous_node:named_child(previous_node:named_child_count() - 1)
+    elseif previous_node and allow_previous_parent then
+      destination_node = previous_node
+    end
+  end
+
+  return destination_node
 end
 
 ---Get the text of the node
