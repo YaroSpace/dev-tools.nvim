@@ -52,13 +52,16 @@ local function make_params()
 end
 
 ---@param params Params|nil
----@return Ctx
+---@return Ctx|nil
 local function get_ctx(params)
   params = params or make_params()
 
   local buf = vim.uri_to_bufnr(params.textDocument.uri)
+  local win = vim.fn.win_findbuf(buf)[1]
 
-  local cursor = vim.api.nvim_win_get_cursor(vim.fn.bufwinid(buf))
+  if not win then return end
+
+  local cursor = vim.api.nvim_win_get_cursor(win)
   local row = params.range and params.range.start.line or cursor[1]
   local col = params.range and params.range.start.character or cursor[2]
 
@@ -79,7 +82,7 @@ local function get_ctx(params)
 
   local ctx = {
     buf = buf,
-    win = vim.fn.win_findbuf(buf)[1],
+    win = win,
     row = row,
     col = col,
     line = line,

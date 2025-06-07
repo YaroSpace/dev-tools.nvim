@@ -177,6 +177,23 @@ local M = {
 > [!NOTE]
 > Dev-tools picker uses Snacks.nvim picker module, which should be included as a dependency or installed separately.
 
+## Integration with `nvim-lightbulb` and `lsp-saga`
+
+Some plugins, like `lsp-saga` or `nvim-lighbulb` show :bulb: signs when there are code actions available.
+
+Since dev-tools provides code actions for every line, you may want to disable it in your config.
+For example:
+
+```lua
+require('lspsaga').setup({
+  lightbulb = { ignore = { clients = { 'dev-tools' } } }
+})
+
+require("nvim-lightbulb").setup({
+ ignore = { clients = { "dev-tools" } }
+})
+```
+
 ## Usage
 
 - Code actions are accessible via the default LSP keymaps, e.g. `gra`, `<leader>ca`, `<leader>la`, etc. 

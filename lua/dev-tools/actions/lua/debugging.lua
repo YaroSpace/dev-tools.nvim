@@ -6,7 +6,7 @@ local function insert_log(action, method)
   local var = ctx.edit:get_range()[1]
 
   var = var ~= "" and var or ctx.word
-  vim.fn.append(ctx.row + 1, ('%s("%s: ", %s)'):format(method, var:gsub('"', ""), var == "" and '"HERE"' or var))
+  vim.fn.append(ctx.row, ('%s("%s: ", %s)'):format(method, var:gsub('"', ""), var == "" and '"HERE"' or var))
 
   ctx.edit:indent()
   ctx.edit:set_cursor(ctx.row + 1)
