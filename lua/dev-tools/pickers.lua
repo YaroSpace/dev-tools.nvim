@@ -14,9 +14,7 @@ local function format_item(count)
     table.insert(ret, { idx .. ".", "SnacksPickerIdx" })
     table.insert(ret, { " " })
 
-    local action, ctx = item.item.action, item.item.ctx
-    local client = vim.lsp.get_client_by_id(ctx.client_id)
-
+    local action = item.item.action
     local keymap = item.keymap or ""
 
     table.insert(ret, { action.name .. (" "):rep(M.max_width.name - #action.name) })
@@ -27,9 +25,9 @@ local function format_item(count)
 
     table.insert(ret, { action.group .. (" "):rep(M.max_width.group - #action.group), "Number" })
 
-    if client then
+    if item.client then
       ret[#ret + 1] = { " " }
-      ret[#ret + 1] = { ("[%s]"):format(client.name), "SnacksPickerSpecial" }
+      ret[#ret + 1] = { ("[%s]"):format(item.client), "SnacksPickerSpecial" }
     end
 
     table.insert(ret, { " " })
@@ -106,8 +104,11 @@ local function select_actions(items, _, on_choice)
   end
 
   for idx, item in ipairs(items) do
+    local client = vim.lsp.get_client_by_id(item.ctx.client_id)
+    local client_name = client and client.name
+
     item.action.name = item.action.name or item.action.title
-    item.action.group = item.action.group or ""
+    item.action.group = item.action.group or client_name or ""
 
     local keymap = Config.get_action_opts(item.action.group, item.action.name, "keymap", "picker")
 
@@ -115,6 +116,7 @@ local function select_actions(items, _, on_choice)
       formatted = item.action.name,
       text = idx .. " " .. item.action.name .. " " .. item.action.group,
       item = item,
+      client = client_name,
       keymap = keymap,
       idx = idx,
     }
