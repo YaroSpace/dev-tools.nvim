@@ -6,6 +6,7 @@ Table of Contents                           *dev-tools.nvim-table-of-contents*
 1. dev-tools.nvim Main status      |dev-tools.nvim-dev-tools.nvim-main-status|
   - Features              |dev-tools.nvim-dev-tools.nvim-main-status-features|
   - Installation and setup|dev-tools.nvim-dev-tools.nvim-main-status-installation-and-setup|
+  - Integration with nvim-lightbulb and lsp-saga|dev-tools.nvim-dev-tools.nvim-main-status-integration-with-nvim-lightbulb-and-lsp-saga|
   - Usage                    |dev-tools.nvim-dev-tools.nvim-main-status-usage|
   - Adding code actions|dev-tools.nvim-dev-tools.nvim-main-status-adding-code-actions|
   - Contributing      |dev-tools.nvim-dev-tools.nvim-main-status-contributing|
@@ -40,8 +41,8 @@ which actions to include/exclude, to keep the picker clean and fast.
 >lua
     {
       'yarospace/dev-tools.nvim',
-      dependencies = { 
-        "nvim-treesitter/nvim-treesitter" -- code manipulation in buffer, required
+      dependencies = {
+        "nvim-treesitter/nvim-treesitter", -- code manipulation in buffer, required
         {
           "folke/snacks.nvim", -- optional
           opts = {
@@ -64,6 +65,7 @@ which actions to include/exclude, to keep the picker clean and fast.
           exclude = {},
         },
       }
+    }
 <
 
 For other package managers, you may need to include dependencies and call
@@ -75,7 +77,7 @@ Minimal Config ~
     {
       'yarospace/dev-tools.nvim',
       dependencies = { 
-        "nvim-treesitter/nvim-treesitter" -- code manipulation in buffer, required
+        "nvim-treesitter/nvim-treesitter", -- code manipulation in buffer, required
         {
           "folke/snacks.nvim", -- optional
           opts = {
@@ -191,6 +193,25 @@ Full Config ~
 
   [!NOTE] Dev-tools picker uses Snacks.nvim picker module, which should be
   included as a dependency or installed separately.
+
+INTEGRATION WITH NVIM-LIGHTBULB AND LSP-SAGA*dev-tools.nvim-dev-tools.nvim-main-status-integration-with-nvim-lightbulb-and-lsp-saga*
+
+Some plugins, like `lsp-saga` or `nvim-lighbulb` show :bulb: signs when there
+are code actions available.
+
+Since dev-tools provides code actions for every line, you may want to disable
+it in your config. For example:
+
+>lua
+    require('lspsaga').setup({
+      lightbulb = { ignore = { clients = { 'dev-tools' } } }
+    })
+    
+    require("nvim-lightbulb").setup({
+     ignore = { clients = { "dev-tools" } }
+    })
+<
+
 
 USAGE                        *dev-tools.nvim-dev-tools.nvim-main-status-usage*
 
