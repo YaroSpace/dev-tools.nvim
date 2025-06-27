@@ -26,7 +26,7 @@ local Utils = require("dev-tools.utils")
 
 local M = {}
 
-M.last_action = nil
+M.last_action = function() end
 
 local function pcall_wrap(name, fn)
   return function(action)

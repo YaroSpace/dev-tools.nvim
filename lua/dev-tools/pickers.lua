@@ -3,6 +3,12 @@ local Config = require("dev-tools.config")
 
 local M = { groups = {}, max_width = { name = 0, group = 0, item = 0 }, no_group = 0 }
 
+local function snake_to_camel(str)
+  return str:gsub("^%l", string.upper):gsub("_(%l)", function(c)
+    return " " .. c:upper()
+  end)
+end
+
 ---@return snacks.picker.format
 local function format_item(count)
   return function(item)
@@ -105,7 +111,7 @@ local function select_actions(items, _, on_choice)
 
   for idx, item in ipairs(items) do
     local client = vim.lsp.get_client_by_id(item.ctx.client_id)
-    local client_name = client and client.name
+    local client_name = client and snake_to_camel(client.name)
 
     item.action.name = item.action.name or item.action.title
     item.action.group = item.action.group or client_name or ""
