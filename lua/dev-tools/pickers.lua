@@ -47,7 +47,7 @@ local function group_items(item, idx)
   local group = item.item.action.group
 
   if #group == 0 then
-    item.text = item.text .. " Group" -- add generic group name "Group", so ungrouped actions get shown in the grouped list
+    item.text = item.text .. " Group" -- so actions without a group get shown in the grouped list
     M.no_group = M.no_group + 1
     return
   end
@@ -68,8 +68,32 @@ local function group_items(item, idx)
   return group_item
 end
 
+local filter_props = { "kind", "name", "group", "filter" }
+local function has_filter(opts)
+  if vim.iter(opts):any(function(opt)
+    return opt
+  end) then return true end
+end
+
+local function is_filtered_action(action, opts)
+  if not has_filter(opts) then return true end
+
+  local ret = false
+  vim.iter(filter_props):each(function(prop)
+    if opts[prop] and type(opts[prop]) == "string" and action[prop] and opts[prop]:lower():match(action[prop]) then ret = true end
+  end)
+
+  if opts.filter and opts.filter(action) then ret = true end
+
+  return ret
+end
+
 local function select_actions(items, _, on_choice)
   local ui = Config.ui
+
+  local opts = vim.g.dev_tools_action_opts or {}
+  vim.g.dev_tools_action_opts = nil
+
   M.groups, M.no_group = {}, 0
 
   local group_idx = 0
@@ -94,7 +118,7 @@ local function select_actions(items, _, on_choice)
   end
 
   local function get_list_width(count, picker_item)
-    local item = format_item(count)(picker_item)
+    local item = format_item(count)(picker_item, _)
     local line = vim
       .iter(item)
       :map(function(col)
@@ -109,6 +133,8 @@ local function select_actions(items, _, on_choice)
     return math.floor(math.min(vim.o.lines * 0.8 - 10, count + 2) + 0.5)
   end
 
+  local group_actions = ui.group_actions and not has_filter(opts)
+
   for idx, item in ipairs(items) do
     local client = vim.lsp.get_client_by_id(item.ctx.client_id)
     local client_name = client and snake_to_camel(client.name)
@@ -116,33 +142,44 @@ local function select_actions(items, _, on_choice)
     item.action.name = item.action.name or item.action.title
     item.action.group = item.action.group or client_name or ""
 
-    local keymap = Config.get_action_opts(item.action.group, item.action.name, "keymap", "picker")
+    if is_filtered_action(item.action, opts) then
+      local keymap = Config.get_action_opts(item.action.group, item.action.name, "keymap", "picker")
 
-    local picker_item = {
-      formatted = item.action.name,
-      text = idx .. " " .. item.action.name .. " " .. item.action.group,
-      item = item,
-      client = client_name,
-      keymap = keymap,
-      idx = idx,
-    }
+      local picker_item = {
+        formatted = item.action.name,
+        text = idx .. " " .. item.action.name .. " " .. item.action.group,
+        item = item,
+        client = client_name,
+        keymap = keymap,
+        idx = idx,
+      }
 
-    local group_item = group_items(picker_item, idx)
-    _ = ui.group_actions and group_item and table.insert(finder_items, group_item)
+      local group_item = group_items(picker_item, idx)
+      _ = group_actions and group_item and table.insert(finder_items, group_item)
 
-    M.max_width = {
-      name = math.max(M.max_width.name, #item.action.name),
-      group = math.max(M.max_width.group, #item.action.group),
-      item = math.max(M.max_width.item, get_list_width(#finder_items, picker_item)),
-    }
+      M.max_width = {
+        name = math.max(M.max_width.name, #item.action.name),
+        group = math.max(M.max_width.group, #item.action.group),
+        item = math.max(M.max_width.item, get_list_width(#finder_items, picker_item)),
+      }
 
-    table.insert(finder_items, picker_item)
+      table.insert(finder_items, picker_item)
 
-    if keymap then
-      keys[keymap] = { keymap, mode = { "n", "i" }, desc = item.action.name }
-      actions[keymap] = actions.confirm
+      if keymap then
+        keys[keymap] = { keymap, mode = { "n", "i" }, desc = item.action.name }
+        actions[keymap] = actions.confirm
+      end
     end
   end
+
+  local not_groups = vim
+    .iter(finder_items)
+    :filter(function(item)
+      return not item.text:match("->")
+    end)
+    :totable()
+
+  if opts.apply and #not_groups == 1 then return on_choice(not_groups[1].item, not_groups[1].idx) end
 
   local function resize_picker(picker)
     local layout = vim.deepcopy(picker.resolved_layout)
@@ -172,7 +209,7 @@ local function select_actions(items, _, on_choice)
   end
 
   actions.close_group = function(picker)
-    _ = ui.group_actions and apply_filter(picker, "Group")
+    _ = group_actions and apply_filter(picker, "Group")
   end
 
   keys[ui.keymaps.filter] = { "filter_group", mode = { "n", "i" }, desc = "Filter by group" }
@@ -188,14 +225,14 @@ local function select_actions(items, _, on_choice)
 
     layout = {
       layout = {
-        height = get_list_height(ui.group_actions and (#M.groups + M.no_group) or #finder_items),
+        height = get_list_height(group_actions and (#M.groups + M.no_group) or #finder_items),
         width = M.max_width.item,
       },
     },
     win = { input = { keys = keys } },
 
     live = true,
-    pattern = ui.group_actions and "Group" or "",
+    pattern = group_actions and "Group" or "",
     sort = { fields = { "group", "formatter", "idx" } },
 
     actions = actions,
@@ -203,7 +240,7 @@ local function select_actions(items, _, on_choice)
     on_show = function(picker)
       vim.defer_fn(function()
         picker.opts.live = false
-        _ = ui.group_actions and actions.close_group(picker)
+        _ = group_actions and actions.close_group(picker)
       end, 300)
     end,
 

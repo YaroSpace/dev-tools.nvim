@@ -176,4 +176,15 @@ M.register = function(actions)
   Config.cache = cache
 end
 
+---@class ActionOpts: vim.lsp.buf.code_action.Opts
+---@field group? string - only show actions matching this group
+---@field name? string - only show actions matching this name
+---@field kind? string - only show actions matching this kind
+
+---@param opts? ActionOpts
+M.open = function(opts)
+  vim.g.dev_tools_action_opts = opts or {}
+  vim.lsp.buf.code_action(opts)
+end
+
 return M

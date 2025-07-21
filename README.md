@@ -213,6 +213,20 @@ Use `<C-l>` to open the group and `<C-h>` to close.
 
 ![Code Actions Groups](assets/code_actions_groups.png)
 
+- You can also call `require("dev-tools.actions").open(opts) ---@type ActionOpts` to open the actions picker with the specified options.
+
+```lua
+---@class ActionOpts: vim.lsp.buf.code_action.Opts
+---@field group? string - only show actions matching this group
+---@field name? string - only show actions matching this name
+---@field kind? string - only show actions matching this kind
+---@field filter? fun(x: lsp.CodeAction|lsp.Command):boolean - only show actions for which the function returns true
+---@field apply? boolean - apply the action without opening the picker if there is only one action available
+```
+
+> [!NOTE]
+> Useful to set a keymap for QuickFix actions, e.g. `require("dev-tools.actions").open { kind = "quickfix" }`
+
 ## Adding code actions
 
 - Custom actions can be added to the `opts.actions` table in your configuration  
