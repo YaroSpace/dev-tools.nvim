@@ -36,7 +36,17 @@ return {
     {
       name = "Open Todo",
       fn = function(action)
-        local path = action.ctx.root .. "/" .. filename
+        local root = action.ctx.root
+        if not root or root == "" then
+          if action.ctx.bufname then
+            root = vim.fs.dirname(action.ctx.bufname)
+          elseif action.ctx.buf then
+            local bufname = vim.api.nvim_buf_get_name(action.ctx.buf)
+            root = vim.fs.dirname(bufname)
+          end
+        end
+        local path = root .. "/" .. filename
+
         if vim.fn.filereadable(path) == 0 then return create_todo_file(path) end
         vim.cmd("edit " .. path)
       end,
@@ -44,7 +54,14 @@ return {
     {
       name = "Add Todo",
       fn = function(action)
-        local path = action.ctx.root .. "/" .. filename
+        local root = action.ctx.root
+        if not root or root == "" then
+          if action.ctx.bufname then root = vim.fs.dirname(action.ctx.bufname) end
+        elseif action.ctx.buf then
+          local bufname = vim.api.nvim_buf_get_name(action.ctx.buf)
+          root = vim.fs.dirname(bufname)
+        end
+        local path = root .. "/" .. filename
 
         vim.ui.input({ prompt = "Todo: " }, function(input)
           if not input or input == "" then return end
